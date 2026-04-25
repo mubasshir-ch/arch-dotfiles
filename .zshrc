@@ -118,3 +118,8 @@ alias boot-windows='sudo grub-reboot "osprober-efi-3E25-0E62" && sudo reboot'
 # export GTK_IM_MODULE=ibus
 # export QT_IM_MODULE=ibus
 # export XMODIFIERS="@im=ibus"
+
+export OLLAMA_MODELS="/mnt/ssd/ollama/models"
+export EDITOR="nvim"
+export VISUAL="nvim"
+export PATH="$HOME/.ghcup/bin:$PATH"
