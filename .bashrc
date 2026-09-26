@@ -20,3 +20,6 @@ eval "$(starship init bash)"
 eval "$(starship init bash)"
 
 [ -f "/home/mub/.ghcup/env" ] && . "/home/mub/.ghcup/env" # ghcup-env
+
+# Added by Antigravity CLI installer
+export PATH="/home/mub/.local/bin:$PATH"
