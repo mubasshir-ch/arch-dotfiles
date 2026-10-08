@@ -1,0 +1,5 @@
+# Runtime application states and locks
+.config/qBittorrent/lockfile
+.config/qBittorrent/qBittorrent-data.conf
+.config/qBittorrent/qBittorrent.conf
+.config/qBittorrent/rss/storage.lock

@@ -123,3 +123,26 @@ export OLLAMA_MODELS="/mnt/ssd/ollama/models"
 export EDITOR="nvim"
 export VISUAL="nvim"
 export PATH="$HOME/.ghcup/bin:$PATH"
+
+# opencode
+export PATH=/home/mub/.opencode/bin:$PATH
+
+#Java
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk
+
+#Flutter
+export PATH="$PATH:$HOME/.development/flutter/bin"
+
+#Android
+export ANDROID_HOME=$HOME/.development/android-sdk
+export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+export PATH=$PATH:$ANDROID_HOME/emulator
+
+#Pycord 
+export PATH="$PATH:/home/mub/productivity/projects/pycord-template/bin"
+
+
+
+# Added by Antigravity CLI installer
+export PATH="/home/mub/.local/bin:$PATH"
