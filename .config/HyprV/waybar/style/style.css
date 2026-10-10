@@ -152,19 +152,14 @@ window#waybar.empty #window {
 
 #backlight {
   color: #f9e2af;
-  border-radius: 10px 0px 0px 10px;
-  border-right: 0px;
+  border-radius: 10px;
+  margin-right: 10px;
 }
 
 #pulseaudio {
   color: #89b4fa;
   border-radius: 10px 0px 0px 10px;
   border-right: 0px;
-}
-
-#backlight + #pulseaudio {
-  border-left: 0px;
-  border-radius: 0px;
 }
 
 #pulseaudio.microphone {
