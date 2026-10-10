@@ -77,19 +77,19 @@ click_state = get_click_state()
 if not connected_devices:
     # Powered on, but no devices connected
     print(json.dumps({
-        "text": " on",
+        "text": "󰂯 on",
         "tooltip": "Bluetooth On (No devices connected)",
         "class": "on"
     }))
 else:
     first_device, first_batt = connected_devices[0]
     dev_tooltip_lines = [f"{dev}{batt}" for dev, batt in connected_devices]
-    tooltip_str = " Connected:\n" + "\n".join(dev_tooltip_lines)
+    tooltip_str = "󰂱 Connected:\n" + "\n".join(dev_tooltip_lines)
     
     if click_state == "alt":
-        text = f" {first_device}{first_batt}"
+        text = f"󰂱 {first_device}{first_batt}"
     else:
-        text = " on"
+        text = "󰂱 on"
 
     print(json.dumps({
         "text": text,

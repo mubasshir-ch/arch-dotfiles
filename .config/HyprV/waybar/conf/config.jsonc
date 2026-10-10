@@ -80,8 +80,8 @@
             "critical": 20
         },
         "format": "{icon} {capacity}%",
-        "format-charging": " {capacity}%",
-        "format-plugged": " {capacity}%",
+        "format-charging": "󰂄 {capacity}%",
+        "format-plugged": "󰂄 {capacity}%",
         "format-alt": "{time} {icon}",
         "format-icons": [
             "󰂎",
@@ -100,30 +100,30 @@
     "pulseaudio": {
         "format": "{icon} {volume}%",
         "tooltip": false,
-        "format-muted": " Muted",
+        "format-muted": "󰝟 Muted",
         "on-click": "~/.config/HyprV/waybar/scripts/volume --toggle",
         "on-click-right": "pavucontrol",
         "on-scroll-up": "~/.config/HyprV/waybar/scripts/volume --inc",
         "on-scroll-down": "~/.config/HyprV/waybar/scripts/volume --dec",
         "scroll-step": 5,
         "format-icons": {
-            "headphone": "",
-            "hands-free": "",
-            "headset": "",
-            "phone": "",
-            "portable": "",
-            "car": "",
+            "headphone": "󰋋",
+            "hands-free": "󰋋",
+            "headset": "󰋋",
+            "phone": "󰏲",
+            "portable": "󰏲",
+            "car": "󰄋",
             "default": [
-                "",
-                "",
-                ""
+                "󰕿",
+                "󰖀",
+                "󰕾"
             ]
         }
     },
     "pulseaudio#microphone": {
         "format": "{format_source}",
-        "format-source": " {volume}%",
-        "format-source-muted": "  Muted",
+        "format-source": "󰍬 {volume}%",
+        "format-source-muted": "󰍭 Muted",
         "on-click": "~/.config/HyprV/waybar/scripts/volume --toggle-mic",
         "on-click-right": "pavucontrol",
         "on-scroll-up": "~/.config/HyprV/waybar/scripts/volume --mic-inc",
@@ -138,12 +138,12 @@
         "format-disconnected": "",
         "format-disabled": "",
         "format-icons": {
-            "wifi": "",
+            "wifi": "󰤨",
             "ethernet": "󰈀",
             "disconnected": ""
         },
         "tooltip-format": "{ifname} via {gwaddr}",
-        "tooltip-format-wifi": "  {essid} ({signalStrength}%)",
+        "tooltip-format-wifi": "󰤨  {essid} ({signalStrength}%)",
         "tooltip-format-ethernet": "󰈀 {ifname} ({ipaddr}/{cidr})",
         "tooltip-format-disconnected": "Disconnected",
         "format-alt": "{icon} {ipaddr}/{cidr}"

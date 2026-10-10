@@ -94,7 +94,7 @@ loc_24 = now.strftime('%H:%M:%S')
 utc_12 = utc_now.strftime('%I:%M:%S%p')
 utc_24 = utc_now.strftime('%H:%M:%S')
 
-lines.append(f"<span color='#fab387'></span>  <b>Local</b> <span color='#6c7086'>({tz_name})</span>    {loc_12}   <span color='#a6adc8'>{loc_24}</span>")
+lines.append(f"<span color='#fab387'>󱑂</span>  <b>Local</b> <span color='#6c7086'>({tz_name})</span>    {loc_12}   <span color='#a6adc8'>{loc_24}</span>")
 lines.append(f"<span color='#89b4fa'>󰥔</span>  <b>UTC</b>            {utc_12}   <span color='#a6adc8'>{utc_24}</span>")
 
 tooltip = f"<span font_family='JetBrainsMono Nerd Font'>\n" + "\n".join(lines) + "\n</span>"
