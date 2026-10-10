@@ -162,7 +162,8 @@ window#waybar.empty #window {
 }
 
 #custom-weather {
+  color: #fab387;
   border-radius: 0px 10px 10px 0px;
-  border-right: 0px;
+  border-left: 0px;
   margin-left: 0px;
 }
