@@ -15,8 +15,18 @@
         "exec": "~/.config/HyprV/waybar/scripts/waybar-wttr-c.py",
         "return-type": "json"
     },
+    "custom/sysmon": {
+        "format": "{}",
+        "format-alt": "{alt}",
+        "format-alt-click": "click-right",
+        "interval": 3,
+        "exec": "~/.config/HyprV/waybar/scripts/sysmon.py",
+        "return-type": "json",
+        "on-click": "kitty --start-as=fullscreen --title btop sh -c 'btop'"
+    },
     "temperature": {
-        "thermal-zone": 1,
+        "hwmon-path-abs": "/sys/devices/pci0000:00/0000:00:18.3/hwmon",
+        "input-filename": "temp1_input",
         "format": "󰔏",
         "format-alt-click": "click-right",
         "format-alt": "󰔏 {temperatureC}°C",

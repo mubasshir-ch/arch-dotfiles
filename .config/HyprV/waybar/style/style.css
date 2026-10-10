@@ -70,6 +70,7 @@ tooltip label {
 #bluetooth,
 #custom-bluetooth,
 #temperature,
+#custom-sysmon,
 #workspaces,
 #tray,
 #backlight {
@@ -82,9 +83,14 @@ tooltip label {
 }
 
 /* close to left */
-#temperature,
 #custom-myhyprv {
   border-radius: 10px 0px 0px 10px;
+}
+
+#temperature,
+#custom-sysmon {
+  border-radius: 10px;
+  margin-right: 10px;
 }
 
 /*close to the right */
@@ -93,8 +99,13 @@ tooltip label {
   margin-right: 10px;
 }
 
-#temperature.critical {
+#temperature.critical,
+#custom-sysmon.critical {
   color: #eba0ac;
+}
+
+#custom-sysmon.warning {
+  color: #fab387;
 }
 
 #tray {
@@ -172,9 +183,8 @@ window#waybar.empty #window {
 
 #battery {
   color: #a6e3a1;
-  border-radius: 0 10px 10px 0;
+  border-radius: 10px;
   margin-right: 10px;
-  border-left: 0px;
 }
 
 #custom-weather {

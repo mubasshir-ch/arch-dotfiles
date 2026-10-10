@@ -17,7 +17,7 @@
     "modules-right": [
         "network",
         "custom/bluetooth",
-        "temperature",
+        "custom/sysmon",
         "custom/power_profile",
         "battery",
         "backlight",
