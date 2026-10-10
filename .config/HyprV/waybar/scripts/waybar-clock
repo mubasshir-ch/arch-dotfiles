@@ -1,0 +1,101 @@
+#!/usr/bin/env python3
+import datetime
+import calendar
+import json
+import os
+import sys
+import subprocess
+
+STATE_FILE = "/tmp/waybar_clock_mode"
+
+def toggle():
+    mode = "compact"
+    if os.path.exists(STATE_FILE):
+        try:
+            with open(STATE_FILE, "r") as f:
+                mode = f.read().strip()
+        except Exception:
+            mode = "compact"
+    new_mode = "full" if mode == "compact" else "compact"
+    try:
+        with open(STATE_FILE, "w") as f:
+            f.write(new_mode)
+    except Exception:
+        pass
+    # Signal waybar to refresh custom/clock immediately
+    subprocess.run(["pkill", "-SIGRTMIN+8", "waybar"], stderr=subprocess.DEVNULL)
+
+if len(sys.argv) > 1 and sys.argv[1] == "toggle":
+    toggle()
+    sys.exit(0)
+
+# Generate current status
+now = datetime.datetime.now()
+utc_now = datetime.datetime.now(datetime.timezone.utc)
+tz_name = now.astimezone().tzname() or "Local"
+
+mode = "compact"
+if os.path.exists(STATE_FILE):
+    try:
+        with open(STATE_FILE, "r") as f:
+            mode = f.read().strip()
+    except Exception:
+        mode = "compact"
+
+if mode == "full":
+    text = now.strftime("%A, %d %B %Y · %I:%M:%S%p")
+else:
+    text = now.strftime("%a %d · %I:%M%p")
+
+# Calculate window width dynamically from widest element
+raw_local = f"Local  {now.strftime('%I:%M:%S%p  %H:%M:%S')} ({tz_name})"
+raw_utc = f"UTC    {utc_now.strftime('%I:%M:%S%p  %H:%M:%S')}"
+GRID_WIDTH = 24  # Calendar grid (Wxx + space + 7 days * 2 chars + 6 spaces)
+max_w = max(len(raw_local), len(raw_utc), GRID_WIDTH)
+
+# Center calendar grid inside the max window width
+cal_pad_len = (max_w - GRID_WIDTH) // 2
+pad = " " * cal_pad_len
+
+lines = []
+# Make month title slightly larger (14pt vs base 12pt, scale factor 14/12)
+header_scale = 14 / 12
+header_w = round(max_w / header_scale)
+month_header = now.strftime("%B %Y").center(header_w)
+lines.append(f"<span size='14pt' color='#cba6f7'><b>{month_header}</b></span>\n")
+
+# Weekday headers
+weekdays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
+wd_str = " ".join(f"<span color='#f9e2af'><b>{wd}</b></span>" for wd in weekdays)
+lines.append(f"{pad}<span color='#6c7086'><i>   </i></span> {wd_str}")
+
+cal = calendar.Calendar(firstweekday=6) # Sunday first
+weeks = cal.monthdatescalendar(now.year, now.month)
+
+for w in weeks:
+    # ISO week number based on Thursday of the row
+    iso_week = w[4].isocalendar()[1]
+    w_str = f"<span color='#6c7086'><i>W{iso_week:02d}</i></span>"
+    
+    day_strs = []
+    for d in w:
+        if d.month != now.month:
+            day_strs.append("  ")
+        elif d.day == now.day:
+            day_strs.append(f"<span background='#fab387' color='#11111b'><b>{d.day:2d}</b></span>")
+        else:
+            day_strs.append(f"<span color='#cdd6f4'>{d.day:2d}</span>")
+    lines.append(f"{pad}{w_str} " + " ".join(day_strs))
+
+lines.append("")
+lines.append(f"<b>Local</b>  {now.strftime('%I:%M:%S%p  %H:%M:%S')} ({tz_name})")
+lines.append(f"<b>UTC</b>    {utc_now.strftime('%I:%M:%S%p  %H:%M:%S')}")
+
+tooltip = "<tt><span size='12pt'>" + "\n".join(lines) + "</span></tt>"
+
+data = {
+    "text": text,
+    "tooltip": tooltip,
+    "class": "clock"
+}
+print(json.dumps(data), flush=True)

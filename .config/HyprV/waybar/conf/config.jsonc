@@ -7,7 +7,7 @@
     "gtk-layer-shell": true,
     "height": 50,
     "modules-left": [
-        "clock",
+        "custom/clock",
         "custom/weather",
         "hyprland/workspaces"
     ],

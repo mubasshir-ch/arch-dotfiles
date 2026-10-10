@@ -1,8 +1,11 @@
 {
-    "clock": {
-        "format": "{:%a %d · %I:%M%p}",
-        "format-alt": "{:%A, %d %B %Y · %I:%M:%S%p}",
-        "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>"
+    "custom/clock": {
+        "format": "{}",
+        "interval": 1,
+        "exec": "~/.config/HyprV/waybar/scripts/waybar-clock",
+        "return-type": "json",
+        "on-click": "~/.config/HyprV/waybar/scripts/waybar-clock toggle",
+        "signal": 8
     },
     "custom/weather": {
         //shows the current weather and forecast

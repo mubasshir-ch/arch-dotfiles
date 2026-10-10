@@ -14,10 +14,18 @@ window#waybar {
 
 tooltip {
   background: #1e1e2e;
-  border-radius: 10px;
+  border-radius: 12px;
   border-width: 2px;
   border-style: solid;
-  border-color: #11111b;
+  border-color: #313244;
+  padding: 12px 16px;
+}
+
+tooltip label {
+  color: #cdd6f4;
+  font-family: "JetBrainsMono Nerd Font";
+  font-size: 15px;
+  padding: 4px;
 }
 
 #workspaces button {
@@ -54,6 +62,7 @@ tooltip {
 #custom-light_dark,
 #window,
 #clock,
+#custom-clock,
 #battery,
 #pulseaudio,
 #network,
@@ -120,7 +129,8 @@ window#waybar.empty #window {
     padding: 0;
 }
 
-#clock {
+#clock,
+#custom-clock {
   color: #fab387;
   border-radius: 10px 0px 0px 10px;
   margin-left: 10px;
