@@ -58,6 +58,7 @@ tooltip {
 #pulseaudio,
 #network,
 #bluetooth,
+#custom-bluetooth,
 #temperature,
 #workspaces,
 #tray,
@@ -78,7 +79,6 @@ tooltip {
 }
 
 /*close to the right */
-#bluetooth,
 #custom-light_dark {
   border-radius: 0px 10px 10px 0px;
   margin-right: 10px;
@@ -133,7 +133,8 @@ window#waybar.empty #window {
   border-right: 0px;
 }
 
-#bluetooth {
+#bluetooth,
+#custom-bluetooth {
   color: #89b4fa;
   border-radius: 0px 10px 10px 0px;
   margin-right: 10px;

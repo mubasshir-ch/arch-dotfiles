@@ -16,7 +16,7 @@
     ],
     "modules-right": [
         "network",
-        "bluetooth",
+        "custom/bluetooth",
         "temperature",
         "custom/power_profile",
         "battery",
@@ -148,12 +148,12 @@
         "tooltip-format-disconnected": "Disconnected",
         "format-alt": "{icon} {ipaddr}/{cidr}"
     },
-    "bluetooth": {
-        "format": " {status}",
-        "format-disabled": "", // an empty format will hide the module
-        "format-connected": " {num_connections}",
-        "tooltip-format": "{device_alias}",
-        "tooltip-format-connected": " {device_enumerate}",
-        "tooltip-format-enumerate-connected": "{device_alias}"
+    "custom/bluetooth": {
+        "format": "{}",
+        "exec": "~/.config/HyprV/waybar/scripts/waybar-bluetooth",
+        "on-click": "~/.config/HyprV/waybar/scripts/waybar-bluetooth toggle; pkill -SIGRTMIN+9 waybar",
+        "interval": 3,
+        "return-type": "json",
+        "signal": 9
     }
 }

@@ -1,0 +1,98 @@
+#!/usr/bin/env python3
+import json
+import sys
+import os
+from gi.repository import Gio
+
+STATE_FILE = "/tmp/waybar_bt_click_state"
+
+def get_click_state():
+    try:
+        with open(STATE_FILE, "r") as f:
+            return f.read().strip()
+    except Exception:
+        return "normal"
+
+def toggle_click_state():
+    curr = get_click_state()
+    new_state = "alt" if curr == "normal" else "normal"
+    try:
+        with open(STATE_FILE, "w") as f:
+            f.write(new_state)
+    except Exception:
+        pass
+
+if len(sys.argv) > 1 and sys.argv[1] == "toggle":
+    toggle_click_state()
+    sys.exit(0)
+
+try:
+    bus = Gio.bus_get_sync(Gio.BusType.SYSTEM, None)
+    manager = Gio.DBusObjectManagerClient.new_sync(
+        bus,
+        Gio.DBusObjectManagerClientFlags.NONE,
+        "org.bluez",
+        "/",
+        None, None, None
+    )
+    objects = manager.get_objects()
+except Exception:
+    print(json.dumps({"text": "", "tooltip": ""}))
+    sys.exit(0)
+
+powered = False
+connected_devices = []
+
+for obj in objects:
+    adapter = obj.get_interface("org.bluez.Adapter1")
+    if adapter:
+        p = adapter.get_cached_property("Powered")
+        if p and p.get_boolean():
+            powered = True
+
+    device = obj.get_interface("org.bluez.Device1")
+    if device:
+        c = device.get_cached_property("Connected")
+        if c and c.get_boolean():
+            alias_prop = device.get_cached_property("Alias")
+            name_prop = device.get_cached_property("Name")
+            name = alias_prop.get_string() if alias_prop else (name_prop.get_string() if name_prop else "Device")
+            
+            batt_prop = obj.get_interface("org.bluez.Battery1")
+            batt_str = ""
+            if batt_prop:
+                pct = batt_prop.get_cached_property("Percentage")
+                if pct:
+                    batt_str = f" {pct.get_byte()}%"
+                    
+            connected_devices.append((name, batt_str))
+
+if not powered:
+    # Bluetooth turned off / disabled
+    print(json.dumps({"text": "", "tooltip": "", "class": "off"}))
+    sys.exit(0)
+
+click_state = get_click_state()
+
+if not connected_devices:
+    # Powered on, but no devices connected
+    print(json.dumps({
+        "text": " on",
+        "tooltip": "Bluetooth On (No devices connected)",
+        "class": "on"
+    }))
+else:
+    first_device, first_batt = connected_devices[0]
+    dev_tooltip_lines = [f"{dev}{batt}" for dev, batt in connected_devices]
+    tooltip_str = " Connected:\n" + "\n".join(dev_tooltip_lines)
+    
+    if click_state == "alt":
+        text = f" {first_device}{first_batt}"
+    else:
+        text = " on"
+
+    print(json.dumps({
+        "text": text,
+        "tooltip": tooltip_str,
+        "class": "connected"
+    }))
