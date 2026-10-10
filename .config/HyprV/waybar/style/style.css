@@ -83,7 +83,6 @@ tooltip label {
 
 /* close to left */
 #temperature,
-#backlight,
 #custom-myhyprv {
   border-radius: 10px 0px 0px 10px;
 }
@@ -151,10 +150,21 @@ window#waybar.empty #window {
   margin-right: 10px;
 }
 
+#backlight {
+  color: #f9e2af;
+  border-radius: 10px 0px 0px 10px;
+  border-right: 0px;
+}
+
 #pulseaudio {
   color: #89b4fa;
   border-radius: 10px 0px 0px 10px;
   border-right: 0px;
+}
+
+#backlight + #pulseaudio {
+  border-left: 0px;
+  border-radius: 0px;
 }
 
 #pulseaudio.microphone {
