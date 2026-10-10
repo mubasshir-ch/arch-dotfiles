@@ -1,7 +1,8 @@
 {
     "clock": {
-        "format": "{:%I:%M%p}",
-        "tooltip-format": "{: %A, %e %B %Y}"
+        "format": "{:%a %d · %I:%M%p}",
+        "format-alt": "{:%A, %d %B %Y · %I:%M:%S%p}",
+        "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>"
     },
     "custom/weather": {
         //shows the current weather and forecast
