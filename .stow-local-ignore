@@ -1,0 +1,10 @@
+# Files and directories ignored by GNU Stow
+^usr
+^\.git
+^\.gitmodules
+^\.gitignore
+^install\.sh
+^future-plans\.md
+.*\.md$
+.*\.backup$
+.*\.orig$
