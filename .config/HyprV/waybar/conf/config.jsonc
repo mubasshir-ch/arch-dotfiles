@@ -132,12 +132,21 @@
     },
     "network": {
         // "interface": "wlp2*", // (Optional) To force the use of this interface
-        "format-wifi": "  {signalStrength}%",
-        "format-ethernet": "{ipaddr}/{cidr}",
-        "tooltip-format": "{essid} - {ifname} via {gwaddr}",
-        "format-linked": "{ifname} (No IP)",
-        "format-disconnected": "Disconnected ⚠",
-        "format-alt": "{ifname}:{essid} {ipaddr}/{cidr}"
+        "format-wifi": "{icon} on",
+        "format-ethernet": "{icon} on",
+        "format-linked": "",
+        "format-disconnected": "",
+        "format-disabled": "",
+        "format-icons": {
+            "wifi": "",
+            "ethernet": "󰈀",
+            "disconnected": ""
+        },
+        "tooltip-format": "{ifname} via {gwaddr}",
+        "tooltip-format-wifi": "  {essid} ({signalStrength}%)",
+        "tooltip-format-ethernet": "󰈀 {ifname} ({ipaddr}/{cidr})",
+        "tooltip-format-disconnected": "Disconnected",
+        "format-alt": "{icon} {ipaddr}/{cidr}"
     },
     "bluetooth": {
         "format": " {status}",
