@@ -73,7 +73,8 @@ tooltip label {
 #custom-sysmon,
 #workspaces,
 #tray,
-#backlight {
+#backlight,
+#custom-keybinds {
   background: #1e1e2e;
   opacity: 0.8;
   padding: 0px 10px;
@@ -111,6 +112,13 @@ tooltip label {
 #tray {
   border-radius: 10px;
   margin-right: 10px;
+}
+
+#custom-keybinds {
+  color: #b4befe;
+  border-radius: 10px;
+  margin-right: 10px;
+  padding: 0px 8px;
 }
 
 #workspaces {

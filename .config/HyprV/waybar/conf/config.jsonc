@@ -23,7 +23,8 @@
         "backlight",
         "pulseaudio",
         "pulseaudio#microphone",
-        "tray"
+        "tray",
+        "custom/keybinds"
         // "custom/myhyprv",
         // "custom/light_dark"
     ],

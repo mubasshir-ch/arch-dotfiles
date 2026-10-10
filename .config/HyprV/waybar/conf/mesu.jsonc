@@ -15,6 +15,14 @@
         "exec": "~/.config/HyprV/waybar/scripts/waybar-wttr-c.py",
         "return-type": "json"
     },
+    "custom/keybinds": {
+        "format": "{}",
+        "tooltip": true,
+        "exec": "~/.config/HyprV/waybar/scripts/hypr-keybinds.py",
+        "return-type": "json",
+        "interval": 10,
+        "on-click": "kitty -e nvim ~/.config/hypr/hyprland.conf"
+    },
     "custom/sysmon": {
         "format": "{}",
         "format-alt": "{alt}",
