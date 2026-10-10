@@ -75,12 +75,38 @@ location_str = ""
 
 try:
     nearest = init_res.get('nearest_area', [{}])[0]
-    city = nearest.get('areaName', [{}])[0].get('value', '').strip()
     country = nearest.get('country', [{}])[0].get('value', '').strip()
-    region = nearest.get('region', [{}])[0].get('value', '').strip()
+    area_name = nearest.get('areaName', [{}])[0].get('value', '').strip()
+    
+    # Resolve canonical city name
+    city_name = ""
+    lat = nearest.get('latitude')
+    lon = nearest.get('longitude')
+    if lat and lon:
+        try:
+            nom_url = f"https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lon}&format=json&accept-language=en"
+            addr = requests.get(nom_url, headers={"User-Agent": "WaybarWeather/1.0"}, timeout=3).json().get("address", {})
+            city_name = addr.get("city") or addr.get("town") or addr.get("state_district") or addr.get("state")
+        except Exception:
+            pass
 
-    loc_parts = [p for p in [city, region, country] if p]
-    location_str = ", ".join(loc_parts)
+    # Fallback to system timezone city if needed
+    if not city_name:
+        try:
+            import subprocess
+            tz = subprocess.check_output(["timedatectl", "show", "-p", "Timezone", "--value"], text=True).strip()
+            if "/" in tz:
+                city_name = tz.split("/")[-1].replace("_", " ")
+        except Exception:
+            pass
+
+    if not city_name:
+        city_name = area_name
+
+    if city_name and country:
+        location_str = f"{city_name}, {country}"
+    else:
+        location_str = city_name or country or "Local"
 
     today = date.today()
     today_str = today.isoformat()
@@ -88,10 +114,11 @@ try:
     weather_dates = [d.get('date') for d in init_res.get('weather', [])]
 
     # If the default auto-detected response dates lag behind local timezone date,
-    # re-query wttr.in using the dynamically detected city name to align with local day
-    if city and (not weather_dates or weather_dates[0] != today_str):
+    # re-query wttr.in using the city name to align with local day
+    query_city = city_name or area_name
+    if query_city and (not weather_dates or weather_dates[0] != today_str):
         try:
-            loc_res = requests.get(f"https://wttr.in/{urllib.parse.quote(city)}?format=j1", timeout=8).json()
+            loc_res = requests.get(f"https://wttr.in/{urllib.parse.quote(query_city)}?format=j1", timeout=8).json()
             if loc_res.get('weather'):
                 weather = loc_res
         except Exception:
