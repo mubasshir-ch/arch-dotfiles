@@ -47,30 +47,18 @@ if mode == "full":
 else:
     text = now.strftime("%a %d · %I:%M%p")
 
-# Calculate window width dynamically from widest element
-raw_local = f"Local  {now.strftime('%I:%M:%S%p  %H:%M:%S')} ({tz_name})"
-raw_utc = f"UTC    {utc_now.strftime('%I:%M:%S%p  %H:%M:%S')}"
-GRID_WIDTH = 24  # Calendar grid (Wxx + space + 7 days * 2 chars + 6 spaces)
-max_w = max(len(raw_local), len(raw_utc), GRID_WIDTH)
+# Modern, well-spaced calendar grid matching the tabular design of the weather tooltip
+WIDTH = 37
+divider = "<span color='#313244'>" + "─" * WIDTH + "</span>"
 
-# Center calendar grid inside the max window width
-cal_pad_len = (max_w - GRID_WIDTH) // 2
-pad = " " * cal_pad_len
-
-lines = []
-# Make month title slightly larger (14pt vs base 12pt, scale factor 14/12)
-header_scale = 14 / 12
-header_w = round(max_w / header_scale)
-month_header = now.strftime("%B %Y").center(header_w)
-lines.append(f"<span size='14pt' color='#cba6f7'><b>{month_header}</b></span>\n")
-
-# Weekday headers
 weekdays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
-wd_str = " ".join(f"<span color='#f9e2af'><b>{wd}</b></span>" for wd in weekdays)
-lines.append(f"{pad}<span color='#6c7086'><i>   </i></span> {wd_str}")
+wd_str = "   ".join(f"<span color='#f9e2af'><b>{wd}</b></span>" for wd in weekdays)
 
 cal = calendar.Calendar(firstweekday=6) # Sunday first
 weeks = cal.monthdatescalendar(now.year, now.month)
+
+cal_rows = []
+cal_rows.append(f"<span color='#6c7086'><i>   </i></span>  {wd_str}")
 
 for w in weeks:
     # ISO week number based on Thursday of the row
@@ -85,13 +73,31 @@ for w in weeks:
             day_strs.append(f"<span background='#fab387' color='#11111b'><b>{d.day:2d}</b></span>")
         else:
             day_strs.append(f"<span color='#cdd6f4'>{d.day:2d}</span>")
-    lines.append(f"{pad}{w_str} " + " ".join(day_strs))
+    cal_rows.append(f"{w_str}  " + "   ".join(day_strs))
 
-lines.append("")
-lines.append(f"<b>Local</b>  {now.strftime('%I:%M:%S%p  %H:%M:%S')} ({tz_name})")
-lines.append(f"<b>UTC</b>    {utc_now.strftime('%I:%M:%S%p  %H:%M:%S')}")
+lines = []
 
-tooltip = "<tt><span size='12pt'>" + "\n".join(lines) + "</span></tt>"
+# 1. Header with calendar icon & centered Month Year
+header_scale = 14 / 12
+header_w = round(WIDTH / header_scale)
+month_title = f"󰃭  {now.strftime('%B %Y')}".center(header_w)
+lines.append(f"<span size='14pt' color='#cba6f7'><b>{month_title}</b></span>")
+lines.append(divider)
+
+# 2. Calendar Grid
+lines.extend(cal_rows)
+lines.append(divider)
+
+# 3. Modern Time Cards with Nerd Icons
+loc_12 = now.strftime('%I:%M:%S%p')
+loc_24 = now.strftime('%H:%M:%S')
+utc_12 = utc_now.strftime('%I:%M:%S%p')
+utc_24 = utc_now.strftime('%H:%M:%S')
+
+lines.append(f"<span color='#fab387'></span>  <b>Local</b> <span color='#6c7086'>({tz_name})</span>    {loc_12}   <span color='#a6adc8'>{loc_24}</span>")
+lines.append(f"<span color='#89b4fa'>󰥔</span>  <b>UTC</b>            {utc_12}   <span color='#a6adc8'>{utc_24}</span>")
+
+tooltip = f"<span font_family='JetBrainsMono Nerd Font'>\n" + "\n".join(lines) + "\n</span>"
 
 data = {
     "text": text,
