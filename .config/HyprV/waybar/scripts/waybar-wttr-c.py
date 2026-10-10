@@ -5,93 +5,66 @@ import requests
 import urllib.parse
 from datetime import datetime, date, timedelta
 
-WEATHER_CODES = {
-    '113': '☀️ ',
-    '116': '⛅ ',
-    '119': '☁️ ',
-    '122': '☁️ ',
-    '143': '🌫️',
-    '149': '🌫️',
-    '176': '🌧️',
-    '179': '🌧️',
-    '182': '🌧️',
-    '185': '🌧️',
-    '200': '⛈️ ',
-    '227': '🌨️',
-    '230': '🌨️',
-    '248': '🌫️',
-    '260': '🌫️',
-    '263': '🌧️',
-    '266': '🌧️',
-    '281': '🌧️',
-    '284': '🌧️',
-    '293': '🌧️',
-    '296': '🌧️',
-    '299': '🌧️',
-    '302': '🌧️',
-    '305': '🌧️',
-    '308': '🌧️',
-    '311': '🌧️',
-    '314': '🌧️',
-    '317': '🌧️',
-    '320': '🌨️',
-    '323': '🌨️',
-    '326': '🌨️',
-    '329': '❄️ ',
-    '332': '❄️ ',
-    '335': '❄️ ',
-    '338': '❄️ ',
-    '350': '🌧️',
-    '353': '🌧️',
-    '356': '🌧️',
-    '359': '🌧️',
-    '362': '🌧️',
-    '365': '🌧️',
-    '368': '🌧️',
-    '371': '❄️ ',
-    '374': '🌨️',
-    '377': '🌨️',
-    '386': '⛈️ ',
-    '389': '⛈️ ',
-    '392': '⛈️ ',
-    '395': '❄️ '
+# Nerd Font weather icons matching JetBrainsMono Nerd Font
+WEATHER_ICONS = {
+    '113': '󰖙', # Sunny / Clear
+    '116': '󰖕', # Partly cloudy
+    '119': '󰖐', # Cloudy
+    '122': '󰖐', # Overcast
+    '143': '󰖑', # Mist
+    '149': '󰖑', # Smoky haze
+    '176': '󰖖', # Patchy rain
+    '179': '󰖒', # Patchy snow
+    '182': '󰖒', # Patchy sleet
+    '185': '󰖒', # Patchy freezing drizzle
+    '200': '󰙾', # Thundery outbreaks
+    '227': '󰼶', # Blowing snow
+    '230': '󰼶', # Blizzard
+    '248': '󰖑', # Fog
+    '260': '󰖑', # Freezing fog
+    '263': '󰖖', # Patchy light drizzle
+    '266': '󰖖', # Light drizzle
+    '281': '󰖖', # Freezing drizzle
+    '284': '󰖖', # Heavy freezing drizzle
+    '293': '󰖖', # Patchy light rain
+    '296': '󰖖', # Light rain
+    '299': '󰖖', # Moderate rain at times
+    '302': '󰖖', # Moderate rain
+    '305': '󰖒', # Heavy rain at times
+    '308': '󰖒', # Heavy rain
+    '311': '󰖖', # Light freezing rain
+    '314': '󰖒', # Moderate or heavy freezing rain
+    '317': '󰖖', # Light sleet
+    '320': '󰼶', # Moderate or heavy sleet
+    '323': '󰼶', # Patchy light snow
+    '326': '󰼶', # Light snow
+    '329': '󰼶', # Patchy moderate snow
+    '332': '󰼶', # Moderate snow
+    '335': '󰼶', # Patchy heavy snow
+    '338': '󰼶', # Heavy snow
+    '350': '󰖖', # Ice pellets
+    '353': '󰖖', # Light rain shower
+    '356': '󰖒', # Moderate or heavy rain shower
+    '359': '󰖒', # Torrential rain shower
+    '362': '󰖖', # Light sleet showers
+    '365': '󰖒', # Moderate or heavy sleet showers
+    '368': '󰼶', # Light snow showers
+    '371': '󰼶', # Moderate or heavy snow showers
+    '374': '󰖖', # Light showers of ice pellets
+    '377': '󰖒', # Moderate or heavy showers of ice pellets
+    '386': '󰙾', # Patchy light rain with thunder
+    '389': '󰙾', # Moderate or heavy rain with thunder
+    '392': '󰙾', # Patchy light snow with thunder
+    '395': '󰙾', # Moderate or snow with thunder
 }
 
 def get_weather_icon(code):
-    return WEATHER_CODES.get(str(code), '⛅ ')
-
-
-def format_time(time):
-    return time.replace("00", "").zfill(2)
-
-
-def format_temp(temp):
-    return (temp + "°").ljust(3)
-
-
-def format_chances(hour):
-    chances = {
-        "chanceoffog": "Fog",
-        "chanceoffrost": "Frost",
-        "chanceofovercast": "Overcast",
-        "chanceofrain": "Rain",
-        "chanceofsnow": "Snow",
-        "chanceofsunshine": "Sunshine",
-        "chanceofthunder": "Thunder",
-        "chanceofwindy": "Wind"
-    }
-
-    conditions = []
-    for event in chances.keys():
-        if int(hour.get(event, 0)) > 0:
-            conditions.append(chances[event] + " " + hour[event] + "%")
-    return ", ".join(conditions)
+    return WEATHER_ICONS.get(str(code), '󰖕')
 
 
 data = {}
 
 try:
-    # Pure auto-detect query
     init_res = requests.get("https://wttr.in/?format=j1", timeout=8).json()
 except Exception:
     print(json.dumps({"text": "", "tooltip": ""}))
@@ -132,41 +105,66 @@ try:
     data['text'] = f"{icon} {extrachar}{curr['FeelsLikeC']}°"
 
     tooltip_lines = []
+    
+    # 1. Location & Current Status Header
+    c_desc = curr['weatherDesc'][0]['value'].strip()
     if location_str:
-        tooltip_lines.append(f"<b>📍 {location_str}</b>")
-    tooltip_lines.append(f"<b>{curr['weatherDesc'][0]['value']} {curr['temp_C']}°</b>")
-    tooltip_lines.append(f"Feels like: {curr['FeelsLikeC']}°")
-    tooltip_lines.append(f"Wind: {curr['windspeedKmph']}Km/h")
-    tooltip_lines.append(f"Humidity: {curr['humidity']}%")
+        tooltip_lines.append(f"<span color='#cba6f7'><b>📍 {location_str}</b></span>")
+    tooltip_lines.append(f"<span color='#fab387'><b>{icon}  {c_desc}</b></span>   <b>{curr['temp_C']}°C</b>  (Feels <b>{curr['FeelsLikeC']}°C</b>)")
+    tooltip_lines.append(f"<span color='#89dceb'>󰖝</span> {curr['windspeedKmph']:>2} km/h    <span color='#a6e3a1'>󰖎</span> {curr['humidity']:>2}%    <span color='#f9e2af'>󰖙</span> UV {curr.get('uvIndex', '0')}")
+    tooltip_lines.append("")
 
     now_hour = datetime.now().hour
 
+    # 2. Daily Forecasts in Tabular Layout
     for day in weather.get('weather', []):
         day_date_str = day.get('date', '')
         if day_date_str < today_str:
-            # Skip past days relative to local timezone
             continue
 
         if day_date_str == today_str:
-            header = f"Today, {day_date_str}"
+            d_title = "Today"
         elif day_date_str == tomorrow_str:
-            header = f"Tomorrow, {day_date_str}"
+            d_title = "Tomorrow"
         else:
-            header = day_date_str
+            # Keep only Today and Tomorrow
+            continue
 
-        tooltip_lines.append("")
-        tooltip_lines.append(f"<b>{header}</b>")
-        tooltip_lines.append(f"⬆️ {day['maxtempC']}° ⬇️ {day['mintempC']}° 🌅 {day['astronomy'][0]['sunrise']} 🌇 {day['astronomy'][0]['sunset']}")
+        # Day summary
+        tooltip_lines.append(f"<span color='#f9e2af'><b>{d_title} · {day_date_str}</b></span>")
+        tooltip_lines.append(f"<span color='#f38ba8'> {day['maxtempC']}°</span>  <span color='#89b4fa'> {day['mintempC']}°</span>    <span color='#fab387'>󰖜</span> {day['astronomy'][0]['sunrise']}   <span color='#f5c2e7'>󰖛</span> {day['astronomy'][0]['sunset']}")
+        
+        # Table column headers
+        tooltip_lines.append("<span color='#6c7086'>Time   Weather        Temp  Feel    󰖗     󰖝       󰖎</span>")
+        tooltip_lines.append("<span color='#313244'>────────────────────────────────────────────────</span>")
 
         is_today = (day_date_str == today_str)
         for hour in day.get('hourly', []):
-            h_int = int(format_time(hour['time']))
-            if is_today and h_int < now_hour - 2:
+            raw_t = int(hour['time']) // 100
+            if is_today and raw_t < now_hour - 2:
                 continue
+            
+            t_str = f"{raw_t:02d}:00"
             h_icon = get_weather_icon(hour.get('weatherCode', ''))
-            chances = format_chances(hour)
-            chance_str = f", {chances}" if chances else ""
-            tooltip_lines.append(f"{format_time(hour['time'])} {h_icon} {format_temp(hour['FeelsLikeC'])} {hour['weatherDesc'][0]['value']}{chance_str}")
+            h_desc = hour['weatherDesc'][0]['value'].strip()
+            if len(h_desc) > 12:
+                h_desc = h_desc[:11] + "…"
+            
+            temp = f"{hour['tempC']}°"
+            feel = f"{hour['FeelsLikeC']}°"
+            rain = f"{hour.get('chanceofrain', '0')}%"
+            wind = f"{hour.get('windspeedKmph', '0')}k"
+            hum = f"{hour.get('humidity', '0')}%"
+            
+            row = f"{t_str:<5}  {h_icon} {h_desc:<12} {temp:>4}  {feel:>4}  {rain:>5}  {wind:>4}    {hum:>4}"
+            tooltip_lines.append(row)
+        
+        tooltip_lines.append("")
+
+    # 3. Legend at the bottom
+    tooltip_lines.append("<span color='#6c7086'><b>Legend:</b></span>")
+    tooltip_lines.append("<span color='#a6adc8'> Max    Min   󰖜 Sunrise   󰖛 Sunset</span>")
+    tooltip_lines.append("<span color='#a6adc8'>󰖗 Rain  󰖝 Wind  󰖎 Humidity  UV UV Index</span>")
 
     data['tooltip'] = f"<span font_family='JetBrainsMono Nerd Font'>\n" + "\n".join(tooltip_lines) + "\n</span>"
     print(json.dumps(data))
