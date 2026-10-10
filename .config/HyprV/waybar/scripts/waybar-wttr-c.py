@@ -2,7 +2,8 @@
 
 import json
 import requests
-from datetime import datetime
+import urllib.parse
+from datetime import datetime, date, timedelta
 
 WEATHER_CODES = {
     '113': '☀️ ',
@@ -59,14 +60,6 @@ WEATHER_CODES = {
 def get_weather_icon(code):
     return WEATHER_CODES.get(str(code), '⛅ ')
 
-data = {}
-
-try:
-    weather = requests.get("https://wttr.in/?format=j1", timeout=10).json()
-except Exception:
-    print(json.dumps({"text": "", "tooltip": ""}))
-    exit(0)
-
 
 def format_time(time):
     return time.replace("00", "").zfill(2)
@@ -90,11 +83,47 @@ def format_chances(hour):
 
     conditions = []
     for event in chances.keys():
-        if int(hour[event]) > 0:
+        if int(hour.get(event, 0)) > 0:
             conditions.append(chances[event] + " " + hour[event] + "%")
     return ", ".join(conditions)
 
+
+data = {}
+
 try:
+    # Pure auto-detect query
+    init_res = requests.get("https://wttr.in/?format=j1", timeout=8).json()
+except Exception:
+    print(json.dumps({"text": "", "tooltip": ""}))
+    exit(0)
+
+weather = init_res
+location_str = ""
+
+try:
+    nearest = init_res.get('nearest_area', [{}])[0]
+    city = nearest.get('areaName', [{}])[0].get('value', '').strip()
+    country = nearest.get('country', [{}])[0].get('value', '').strip()
+    region = nearest.get('region', [{}])[0].get('value', '').strip()
+
+    loc_parts = [p for p in [city, region, country] if p]
+    location_str = ", ".join(loc_parts)
+
+    today = date.today()
+    today_str = today.isoformat()
+    tomorrow_str = (today + timedelta(days=1)).isoformat()
+    weather_dates = [d.get('date') for d in init_res.get('weather', [])]
+
+    # If the default auto-detected response dates lag behind local timezone date,
+    # re-query wttr.in using the dynamically detected city name to align with local day
+    if city and (not weather_dates or weather_dates[0] != today_str):
+        try:
+            loc_res = requests.get(f"https://wttr.in/{urllib.parse.quote(city)}?format=j1", timeout=8).json()
+            if loc_res.get('weather'):
+                weather = loc_res
+        except Exception:
+            pass
+
     curr = weather['current_condition'][0]
     tempint = int(curr['FeelsLikeC'])
     extrachar = '+' if 0 < tempint < 10 else ''
@@ -102,26 +131,44 @@ try:
     icon = get_weather_icon(curr.get('weatherCode', ''))
     data['text'] = f"{icon} {extrachar}{curr['FeelsLikeC']}°"
 
-    data['tooltip'] = f"<b>{curr['weatherDesc'][0]['value']} {curr['temp_C']}°</b>\n"
-    data['tooltip'] += f"Feels like: {curr['FeelsLikeC']}°\n"
-    data['tooltip'] += f"Wind: {curr['windspeedKmph']}Km/h\n"
-    data['tooltip'] += f"Humidity: {curr['humidity']}%\n"
+    tooltip_lines = []
+    if location_str:
+        tooltip_lines.append(f"<b>📍 {location_str}</b>")
+    tooltip_lines.append(f"<b>{curr['weatherDesc'][0]['value']} {curr['temp_C']}°</b>")
+    tooltip_lines.append(f"Feels like: {curr['FeelsLikeC']}°")
+    tooltip_lines.append(f"Wind: {curr['windspeedKmph']}Km/h")
+    tooltip_lines.append(f"Humidity: {curr['humidity']}%")
 
-    for i, day in enumerate(weather.get('weather', [])):
-        data['tooltip'] += "\n<b>"
-        if i == 0:
-            data['tooltip'] += "Today, "
-        elif i == 1:
-            data['tooltip'] += "Tomorrow, "
-        data['tooltip'] += f"{day['date']}</b>\n"
-        data['tooltip'] += f"⬆️ {day['maxtempC']}° ⬇️ {day['mintempC']}° "
-        data['tooltip'] += f"🌅 {day['astronomy'][0]['sunrise']} 🌇 {day['astronomy'][0]['sunset']}\n"
+    now_hour = datetime.now().hour
+
+    for day in weather.get('weather', []):
+        day_date_str = day.get('date', '')
+        if day_date_str < today_str:
+            # Skip past days relative to local timezone
+            continue
+
+        if day_date_str == today_str:
+            header = f"Today, {day_date_str}"
+        elif day_date_str == tomorrow_str:
+            header = f"Tomorrow, {day_date_str}"
+        else:
+            header = day_date_str
+
+        tooltip_lines.append("")
+        tooltip_lines.append(f"<b>{header}</b>")
+        tooltip_lines.append(f"⬆️ {day['maxtempC']}° ⬇️ {day['mintempC']}° 🌅 {day['astronomy'][0]['sunrise']} 🌇 {day['astronomy'][0]['sunset']}")
+
+        is_today = (day_date_str == today_str)
         for hour in day.get('hourly', []):
-            if i == 0 and int(format_time(hour['time'])) < datetime.now().hour - 2:
+            h_int = int(format_time(hour['time']))
+            if is_today and h_int < now_hour - 2:
                 continue
             h_icon = get_weather_icon(hour.get('weatherCode', ''))
-            data['tooltip'] += f"{format_time(hour['time'])} {h_icon} {format_temp(hour['FeelsLikeC'])} {hour['weatherDesc'][0]['value']}, {format_chances(hour)}\n"
+            chances = format_chances(hour)
+            chance_str = f", {chances}" if chances else ""
+            tooltip_lines.append(f"{format_time(hour['time'])} {h_icon} {format_temp(hour['FeelsLikeC'])} {hour['weatherDesc'][0]['value']}{chance_str}")
 
+    data['tooltip'] = f"<span font_family='JetBrainsMono Nerd Font'>\n" + "\n".join(tooltip_lines) + "\n</span>"
     print(json.dumps(data))
 except Exception:
     print(json.dumps({"text": "", "tooltip": ""}))

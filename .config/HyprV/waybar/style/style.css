@@ -24,7 +24,8 @@ tooltip {
 tooltip label {
   color: #cdd6f4;
   font-family: "JetBrainsMono Nerd Font";
-  font-size: 15px;
+  font-weight: bold;
+  font-size: 16px;
   padding: 4px;
 }
 
