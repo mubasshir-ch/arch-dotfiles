@@ -24,7 +24,8 @@
         "pulseaudio",
         "pulseaudio#microphone",
         "tray",
-        "custom/keybinds"
+        "custom/keybinds",
+        "custom/notification"
         // "custom/myhyprv",
         // "custom/light_dark"
     ],

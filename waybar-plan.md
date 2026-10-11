@@ -99,3 +99,40 @@ Add the built-in `idle_inhibitor` module to keep the display awake during video 
 | **Yellow** | `#f9e2af` | Network, Weekday headers, Idle active |
 | **Green** | `#a6e3a1` | Power profile, Battery, System good state |
 | **Red** | `#f38ba8` | Max temperature, Critical battery/temp |
+
+---
+
+## 6. Upcoming Feature Backlog & Refinements
+
+### 1. Unified Battery & Display Brightness Pill
+- **Concept:** Merge Battery (`#battery`) and Display Brightness (`#backlight`) into a single 2-part pill on laptops:
+  `[ 󰂄 Battery | 󰃠 Brightness ]`
+- **Styling Requirements:**
+  - Left element (`#battery`): `border-radius: 10px 0 0 10px; border-right: 0px;`
+  - Right element (`#backlight`): `border-radius: 0 10px 10px 0; border-left: 0px; margin-right: 10px;`
+  - Cross-device resilience: ensure desktop layout remains clean and symmetrical when both hardware devices are absent.
+
+### 2. Audio & Microphone Device Tooltip Details
+- **Output Device Tooltip:** Hovering over the volume module (`#pulseaudio`) should display the active playback sink/device name (e.g., `󰓃 Output: Speakers / Arctis Nova 7` or HDMI audio) and volume level.
+- **Input Device Tooltip:** Hovering over the microphone module (`#pulseaudio.microphone`) should display the active input source/microphone name (e.g., `󰍬 Input: Blue Yeti / USB Audio Device`) and mute state.
+- **Implementation:** Utilize Waybar's native `tooltip-format` fields (`{desc}`, `{volume}%`) or `wpctl` / `pactl` inspection.
+
+### 3. Audio Playback Controls in Sound Pill
+- **Concept:** Enhance the sound pill with media playback controls (play/pause, next/previous, track info).
+- **Behavior:**
+  - Opens on click (or via a dedicated mini media icon in the pill).
+  - Can integrate with MPRIS / `playerctl` to control active players (Spotify, Zen Browser, MPV).
+  - Collapses cleanly when no media is active or when toggled closed.
+
+### 4. Notification Center & Quick Settings Panel (Action Center)
+- **Concept:** A dropdown / slide-out panel that manages undismissed notifications and houses all quick system controls in one place — similar to the Windows Notification & Action Center, but modern, lightweight, and tailored for Hyprland.
+- **Features to Include:**
+  - **Notification History:** Scrollable log of unread/undismissed notifications with per-item dismissal and "Clear All".
+  - **Quick Control Toggles:** Wi-Fi toggle/network selection, Bluetooth toggle/device connect, Do Not Disturb (DND), Night Light.
+  - **Quick Sliders:** Master volume slider, microphone input slider, display brightness slider.
+  - **Media Widget:** Mini player with album art and playback scrub controls.
+- **Candidates & Architecture for Research:**
+  - **[SwayNotificationCenter (`swaync`)](https://github.com/ErikReider/SwayNotificationCenter):** The most popular and feature-complete solution for Hyprland/Wayland. Includes a full notification tray + customizable control center widgets, CSS theming (Catppuccin Mocha supported), and a dedicated Waybar tray/bell widget.
+  - **[AGS (Aylur's GTK Shell)](https://github.com/Aylur/ags):** Highly customizable TypeScript + GTK3/4 shell capable of building complete custom control centers and notification flyouts.
+  - **Current Daemon Audit:** Review existing notification daemon (`mako` in `hyprland.conf:41`) and evaluate migration to `swaync` for seamless Action Center integration.
+

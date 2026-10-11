@@ -74,7 +74,8 @@ tooltip label {
 #workspaces,
 #tray,
 #backlight,
-#custom-keybinds {
+#custom-keybinds,
+#custom-notification {
   background: #1e1e2e;
   opacity: 0.8;
   padding: 0px 10px;
@@ -116,9 +117,26 @@ tooltip label {
 
 #custom-keybinds {
   color: #b4befe;
-  border-radius: 10px;
+  border-radius: 10px 0px 0px 10px;
+  border-right: 0px;
+  padding: 0px 8px;
+}
+
+#custom-notification {
+  color: #fab387;
+  border-radius: 0px 10px 10px 0px;
+  border-left: 0px;
   margin-right: 10px;
   padding: 0px 8px;
+}
+
+#custom-notification.notification {
+  color: #f38ba8;
+}
+
+#custom-notification.dnd-notification,
+#custom-notification.dnd-none {
+  color: #eba0ac;
 }
 
 #workspaces {
