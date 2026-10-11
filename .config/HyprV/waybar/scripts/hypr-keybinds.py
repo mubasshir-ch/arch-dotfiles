@@ -175,7 +175,7 @@ def parse_hyprland_config():
 def main():
     tooltip = parse_hyprland_config()
     output = {
-        "text": "󰋖",
+        "text": "",
         "tooltip": tooltip
     }
     print(json.dumps(output))
