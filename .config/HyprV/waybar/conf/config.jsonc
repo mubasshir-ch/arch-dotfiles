@@ -12,7 +12,7 @@
         "hyprland/workspaces"
     ],
     "modules-center": [
-        "hyprland/window"
+        "custom/window"
     ],
     "modules-right": [
         "network",
@@ -34,16 +34,6 @@
         "~/.config/HyprV/waybar/conf/asus-rog.jsonc",
         "~/.config/HyprV/waybar/conf/hyprv-util.jsonc"
     ],
-    "hyprland/window": {
-        "format": "{title}",
-        "icon": true,
-        "icon-size": 16,
-        "max-length": 50,
-        "separate-outputs": true,
-        "rewrite": {
-            "": "" // This helps keep it empty when no window is focused
-        }
-    },
     "wlr/workspaces": {
         "disable-scroll": true,
         "all-outputs": true,

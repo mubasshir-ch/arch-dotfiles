@@ -1,0 +1,255 @@
+#!/usr/bin/env python3
+import json
+import os
+import sys
+import socket
+import select
+import subprocess
+import html
+
+STATE_FILE = "/tmp/waybar_window_mode"
+SIGNAL_NUM = 7  # SIGRTMIN+7
+
+ICON_MAP = {
+    # Browsers
+    "zen": "",
+    "zen-browser": "",
+    "firefox": "",
+    "firefox-esr": "",
+    "google-chrome": "",
+    "google-chrome-stable": "",
+    "chromium": "",
+    "chromium-browser": "",
+    "brave-browser": "",
+    "microsoft-edge": "󰇩",
+    "opera": "",
+    "tor browser": "",
+    # Terminals & Shells
+    "kitty": "󰄛",
+    "alacritty": "",
+    "foot": "󰞷",
+    "footclient": "󰞷",
+    "wezterm": "",
+    "ghostty": "󰞷",
+    "org.gnome.console": "",
+    "gnome-terminal": "",
+    "xterm": "",
+    # Development & Editors
+    "neovim": "",
+    "nvim": "",
+    "code": "󰨞",
+    "code-oss": "󰨞",
+    "vscodium": "󰨞",
+    "sublime_text": "",
+    "emacs": "",
+    "jetbrains-idea": "",
+    "jetbrains-pycharm": "󱤓",
+    "jetbrains-clion": "",
+    "jetbrains-rustrover": "󱧼",
+    "gitkraken": "󰊢",
+    "gedit": "󰷈",
+    # Communication
+    "telegram": "",
+    "telegramdesktop": "",
+    "org.telegram.desktop": "",
+    "discord": "󰙯",
+    "vesktop": "󰙯",
+    "webcord": "󰙯",
+    "slack": "󰒱",
+    "element": "󰍡",
+    "signal": "󰭹",
+    "thunderbird": "",
+    # Media & Entertainment
+    "spotify": "",
+    "spotify-launcher": "",
+    "vlc": "󰕼",
+    "mpv": "",
+    "obs": "󰑋",
+    "obs-studio": "󰑋",
+    "steam": "",
+    "lutris": "󰺵",
+    "heroic": "󰊴",
+    # Utilities & Tools
+    "thunar": "󰉋",
+    "nautilus": "󰉋",
+    "org.gnome.nautilus": "󰉋",
+    "dolphin": "󰉋",
+    "pcmanfm": "󰉋",
+    "nemo": "󰉋",
+    "qbittorrent": "󰇚",
+    "btop": "󰓅",
+    "pavucontrol": "󰕾",
+    "org.pulseaudio.pavucontrol": "󰕾",
+    "gnome-calculator": "󰃬",
+    "org.gnome.calculator": "󰃬",
+    "gimp": "",
+    "inkscape": "",
+    "obsidian": "󰠮",
+    "libreoffice": "󱎏",
+    "libreoffice-writer": "󱎐",
+    "libreoffice-calc": "󱎏",
+    "libreoffice-impress": "󱎑",
+    "zathura": "",
+    "evince": "",
+    "org.gnome.evince": "",
+    "postman": "󱓞",
+}
+
+def toggle():
+    mode = "compact"
+    if os.path.exists(STATE_FILE):
+        try:
+            with open(STATE_FILE, "r") as f:
+                mode = f.read().strip()
+        except Exception:
+            mode = "compact"
+    new_mode = "full" if mode == "compact" else "compact"
+    try:
+        with open(STATE_FILE, "w") as f:
+            f.write(new_mode)
+    except Exception:
+        pass
+    # Signal waybar to refresh immediately
+    subprocess.run(["pkill", f"-SIGRTMIN+{SIGNAL_NUM}", "waybar"], stderr=subprocess.DEVNULL)
+
+if len(sys.argv) > 1 and sys.argv[1] == "toggle":
+    toggle()
+    sys.exit(0)
+
+def get_active_window():
+    try:
+        out = subprocess.check_output(["hyprctl", "activewindow", "-j"], stderr=subprocess.DEVNULL)
+        data = json.loads(out)
+        if not data or not data.get("mapped", True) or not data.get("title"):
+            return None
+        return data
+    except Exception:
+        return None
+
+import textwrap
+
+def get_gpu_stats():
+    try:
+        out = subprocess.check_output(
+            ["nvidia-smi", "--query-gpu=utilization.gpu,memory.used", "--format=csv,noheader,nounits"],
+            stderr=subprocess.DEVNULL,
+            timeout=0.1
+        ).decode().strip()
+        parts = [p.strip() for p in out.split(",")]
+        if len(parts) >= 2:
+            return int(parts[0]), int(parts[1])
+    except Exception:
+        pass
+    return None, None
+
+def get_process_stats(pid):
+    if not pid:
+        return None, None, None
+    try:
+        out = subprocess.check_output(
+            ["ps", "-p", str(pid), "-o", "%cpu,%mem,rss", "--no-headers"],
+            stderr=subprocess.DEVNULL
+        ).decode().strip()
+        parts = out.split()
+        if len(parts) >= 3:
+            cpu_pct = float(parts[0])
+            mem_pct = float(parts[1])
+            rss_kb = int(parts[2])
+            mem_mb = round(rss_kb / 1024)
+            return cpu_pct, mem_pct, mem_mb
+    except Exception:
+        pass
+    return None, None, None
+
+def format_title_multiline(title, max_width=42):
+    wrapped = textwrap.wrap(title, width=max_width)
+    if not wrapped:
+        return "<b>Title:</b>       "
+    first = f"<b>Title:</b>       {html.escape(wrapped[0])}"
+    indent = "             "
+    rest = [f"{indent}{html.escape(w)}" for w in wrapped[1:]]
+    return "\n".join([first] + rest)
+
+def render():
+    win = get_active_window()
+    if not win:
+        print(json.dumps({"text": "", "tooltip": "", "class": "empty"}), flush=True)
+        return
+
+    title = win.get("title", "")
+    app_class = (win.get("class") or "").lower()
+    initial_class = (win.get("initialClass") or "").lower()
+    pid = win.get("pid", None)
+    ws_info = win.get("workspace", {})
+    ws_name = ws_info.get("name", str(ws_info.get("id", "")))
+
+    mode = "compact"
+    if os.path.exists(STATE_FILE):
+        try:
+            with open(STATE_FILE, "r") as f:
+                mode = f.read().strip()
+        except Exception:
+            mode = "compact"
+
+    if mode == "full":
+        display_title = title if len(title) <= 45 else title[:42] + "..."
+        bar_text = html.escape(display_title)
+    else:
+        bar_text = "\u200b"
+
+    cpu_pct, mem_pct, mem_mb = get_process_stats(pid)
+    gpu_util, gpu_mem = get_gpu_stats()
+
+    WIDTH = 38
+    divider = "<span color='#313244'>" + "─" * WIDTH + "</span>"
+
+    lines = []
+    app_name = win.get("initialClass") or win.get("class") or "Application"
+    lines.append(f"<span size='13pt' color='#cba6f7'><b>{html.escape(app_name)}</b></span>")
+    lines.append(divider)
+
+    lines.append(format_title_multiline(title))
+    if app_class:
+        lines.append(f"<b>Class:</b>       <span color='#89b4fa'>{app_class}</span>")
+    if pid:
+        lines.append(f"<b>Process ID:</b>  <span color='#fab387'>{pid}</span>")
+
+    res_parts = []
+    if cpu_pct is not None:
+        res_parts.append(f"CPU: <span color='#a6e3a1'><b>{cpu_pct}%</b></span>")
+    if mem_mb is not None and mem_pct is not None:
+        res_parts.append(f"RAM: <span color='#f9e2af'><b>{mem_mb} MB ({mem_pct}%)</b></span>")
+    if gpu_util is not None:
+        res_parts.append(f"GPU: <span color='#89b4fa'><b>{gpu_util}%</b></span>")
+    if res_parts:
+        lines.append("<b>Resources:</b>   " + "  ·  ".join(res_parts))
+
+    if ws_name:
+        win_state = "Floating" if win.get("floating") else "Tiled"
+        if win.get("fullscreen"):
+            win_state = "Fullscreen"
+        lines.append(f"<b>Workspace:</b>   Workspace {ws_name} ({win_state})")
+
+    lines.append(divider)
+    lines.append("󰍽 <i>Left-click:</i>  Toggle title in bar")
+
+    tooltip = f"<span font_family='JetBrainsMono Nerd Font'>\n" + "\n".join(lines) + "\n</span>"
+
+    cls_parts = [mode]
+    if app_class:
+        cls_parts.append(f"win-{app_class.replace('.', '-').lower()}")
+    if initial_class and initial_class != app_class:
+        cls_parts.append(f"win-{initial_class.replace('.', '-').lower()}")
+
+    output = {
+        "text": bar_text,
+        "tooltip": tooltip,
+        "class": cls_parts
+    }
+
+    print(json.dumps(output), flush=True)
+
+# Render once and exit (Waybar polls with interval: 1 and updates immediately on signal)
+render()
+sys.exit(0)
+

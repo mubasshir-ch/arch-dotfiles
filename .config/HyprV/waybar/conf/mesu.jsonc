@@ -7,6 +7,15 @@
         "on-click": "~/.config/HyprV/waybar/scripts/waybar-clock toggle",
         "signal": 8
     },
+    "custom/window": {
+        "format": "{}",
+        "interval": 1,
+        "exec": "~/.config/HyprV/waybar/scripts/waybar-window",
+        "return-type": "json",
+        "on-click": "~/.config/HyprV/waybar/scripts/waybar-window toggle",
+        "signal": 7,
+        "tooltip": true
+    },
     "custom/weather": {
         //shows the current weather and forecast
         "tooltip": true,
