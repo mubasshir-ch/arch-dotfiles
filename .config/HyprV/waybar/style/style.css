@@ -31,28 +31,24 @@ tooltip label {
 
 #workspaces button {
   padding: 5px;
-  color: #313244;
+  color: #6c7086;
   margin-right: 5px;
 }
 
 #workspaces button.active {
-  color: #a6adc8;
+  color: #b4befe;
 }
 
 #workspaces button.focused {
-  color: #a6adc8;
-  background: #eba0ac;
-  border-radius: 10px;
+  color: #b4befe;
 }
 
 #workspaces button.urgent {
-  color: #11111b;
-  background: #a6e3a1;
-  border-radius: 10px;
+  color: #f38ba8;
 }
 
 #workspaces button:hover {
-  background: #11111b;
+  background: transparent;
   color: #cdd6f4;
   border-radius: 10px;
 }
@@ -91,6 +87,7 @@ tooltip label {
 
 #temperature,
 #custom-sysmon {
+  color: #b4befe;
   border-radius: 10px;
   margin-right: 10px;
 }
@@ -122,21 +119,19 @@ tooltip label {
   padding: 0px 8px;
 }
 
-#custom-notification {
-  color: #fab387;
+#custom-notification,
+#custom-notification.notification,
+#custom-notification.dnd-notification,
+#custom-notification.dnd-none,
+#custom-notification.inhibited-notification,
+#custom-notification.inhibited-none,
+#custom-notification.dnd-inhibited-notification,
+#custom-notification.dnd-inhibited-none {
+  color: #b4befe;
   border-radius: 0px 10px 10px 0px;
   border-left: 0px;
   margin-right: 10px;
   padding: 0px 8px;
-}
-
-#custom-notification.notification {
-  color: #f38ba8;
-}
-
-#custom-notification.dnd-notification,
-#custom-notification.dnd-none {
-  color: #eba0ac;
 }
 
 #workspaces {
@@ -147,7 +142,7 @@ tooltip label {
 }
 
 #custom-power_profile {
-  color: #a6e3a1;
+  color: #b4befe;
   border-left: 0px;
   border-right: 0px;
 }
@@ -168,39 +163,39 @@ window#waybar.empty #window {
 
 #clock,
 #custom-clock {
-  color: #fab387;
+  color: #b4befe;
   border-radius: 10px 0px 0px 10px;
   margin-left: 10px;
   border-right: 0px;
 }
 
 #network {
-  color: #f9e2af;
+  color: #b4befe;
   border-radius: 10px 0px 0px 10px;
   border-right: 0px;
 }
 
 #bluetooth,
 #custom-bluetooth {
-  color: #89b4fa;
+  color: #b4befe;
   border-radius: 0px 10px 10px 0px;
   margin-right: 10px;
 }
 
 #backlight {
-  color: #f9e2af;
+  color: #b4befe;
   border-radius: 10px;
   margin-right: 10px;
 }
 
 #pulseaudio {
-  color: #89b4fa;
+  color: #b4befe;
   border-radius: 10px 0px 0px 10px;
   border-right: 0px;
 }
 
 #pulseaudio.microphone {
-  color: #cba6f7;
+  color: #b4befe;
   border-left: 0px;
   border-right: 0px;
   border-radius: 0px 10px 10px 0px;
@@ -208,13 +203,13 @@ window#waybar.empty #window {
 }
 
 #battery {
-  color: #a6e3a1;
+  color: #b4befe;
   border-radius: 10px;
   margin-right: 10px;
 }
 
 #custom-weather {
-  color: #fab387;
+  color: #b4befe;
   border-radius: 0px 10px 10px 0px;
   border-left: 0px;
   margin-left: 0px;

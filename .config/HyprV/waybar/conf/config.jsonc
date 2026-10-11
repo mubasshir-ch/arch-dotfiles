@@ -36,6 +36,8 @@
     ],
     "hyprland/window": {
         "format": "{title}",
+        "icon": true,
+        "icon-size": 16,
         "max-length": 50,
         "separate-outputs": true,
         "rewrite": {
