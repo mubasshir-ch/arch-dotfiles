@@ -243,82 +243,67 @@ window#waybar.empty #custom-window,
   background-image: -gtk-icontheme("application-x-executable");
 }
 
-#custom-window.win-alacritty, #custom-window.icon-alacritty { background-image: -gtk-icontheme("alacritty"); }
-#custom-window.win-audacity, #custom-window.icon-audacity { background-image: -gtk-icontheme("audacity"); }
-#custom-window.win-avahi-discover, #custom-window.icon-network-wired { background-image: -gtk-icontheme("network-wired"); }
-#custom-window.win-blender, #custom-window.icon-blender { background-image: -gtk-icontheme("blender"); }
-#custom-window.win-blueman-adapters, #custom-window.icon-blueman-device { background-image: -gtk-icontheme("blueman-device"); }
-#custom-window.win-blueman-manager, #custom-window.icon-blueman { background-image: -gtk-icontheme("blueman"); }
-#custom-window.win-brave-browser, #custom-window.icon-brave-browser { background-image: -gtk-icontheme("brave-browser"); }
-#custom-window.win-bssh, #custom-window.icon-network-wired { background-image: -gtk-icontheme("network-wired"); }
-#custom-window.win-btop, #custom-window.icon-btop { background-image: -gtk-icontheme("btop"); }
-#custom-window.win-bvnc, #custom-window.icon-network-wired { background-image: -gtk-icontheme("network-wired"); }
-#custom-window.win-chromium, #custom-window.icon-chromium { background-image: -gtk-icontheme("chromium"); }
-#custom-window.win-chromium-browser, #custom-window.icon-chromium { background-image: -gtk-icontheme("chromium"); }
-#custom-window.win-code, #custom-window.icon-code { background-image: -gtk-icontheme("code"); }
-#custom-window.win-code-oss, #custom-window.icon-code-oss { background-image: -gtk-icontheme("code-oss"); }
-#custom-window.win-com-obsproject-studio, #custom-window.icon-com-obsproject-studio { background-image: -gtk-icontheme("com.obsproject.Studio"); }
-#custom-window.win-discord, #custom-window.icon-discord { background-image: -gtk-icontheme("discord"); }
-#custom-window.win-dolphin, #custom-window.icon-dolphin { background-image: -gtk-icontheme("dolphin"); }
-#custom-window.win-firefox, #custom-window.icon-firefox { background-image: -gtk-icontheme("firefox"); }
-#custom-window.win-firefox-esr, #custom-window.icon-firefox { background-image: -gtk-icontheme("firefox"); }
-#custom-window.win-foot, #custom-window.icon-foot { background-image: -gtk-icontheme("foot"); }
-#custom-window.win-footclient, #custom-window.icon-foot { background-image: -gtk-icontheme("foot"); }
-#custom-window.win-geoclue-demo-agent, #custom-window.icon-mark-location-symbolic { background-image: -gtk-icontheme("mark-location-symbolic"); }
-#custom-window.win-geoclue-where-am-i, #custom-window.icon-mark-location-symbolic { background-image: -gtk-icontheme("mark-location-symbolic"); }
+/* Browsers */
+#custom-window.win-zen, #custom-window.win-zen-browser, #custom-window.icon-zen-browser { background-image: -gtk-icontheme("zen-browser"); }
+#custom-window.win-chromium, #custom-window.win-chromium-browser, #custom-window.icon-chromium { background-image: -gtk-icontheme("chromium"); }
+#custom-window.win-firefox, #custom-window.win-firefox-esr, #custom-window.icon-firefox { background-image: -gtk-icontheme("web-browser"); }
+#custom-window.win-google-chrome, #custom-window.win-google-chrome-stable, #custom-window.icon-google-chrome { background-image: -gtk-icontheme("web-browser"); }
+#custom-window.win-brave-browser, #custom-window.icon-brave-browser { background-image: -gtk-icontheme("web-browser"); }
+
+/* Terminals */
+#custom-window.win-kitty, #custom-window.win-kitty-open, #custom-window.icon-kitty { background-image: -gtk-icontheme("kitty"); }
+#custom-window.win-alacritty, #custom-window.icon-alacritty { background-image: -gtk-icontheme("utilities-terminal"); }
+#custom-window.win-foot, #custom-window.win-footclient, #custom-window.icon-foot { background-image: -gtk-icontheme("utilities-terminal"); }
+#custom-window.win-wezterm, #custom-window.win-org-wezfurlong-wezterm, #custom-window.icon-wezterm { background-image: -gtk-icontheme("utilities-terminal"); }
+
+/* Development & Editors */
+#custom-window.win-nvim, #custom-window.win-neovim, #custom-window.icon-nvim { background-image: -gtk-icontheme("nvim"); }
+#custom-window.win-code, #custom-window.win-code-oss, #custom-window.win-vscodium, #custom-window.icon-code { background-image: -gtk-icontheme("accessories-text-editor"); }
+#custom-window.win-gedit, #custom-window.win-org-gnome-gedit, #custom-window.icon-org-gnome-gedit { background-image: -gtk-icontheme("org.gnome.gedit"); }
+
+/* File Managers */
+#custom-window.win-thunar, #custom-window.win-thunar-bulk-rename, #custom-window.win-thunar-settings, #custom-window.icon-org-xfce-thunar { background-image: -gtk-icontheme("org.xfce.thunar"); }
+#custom-window.win-yazi, #custom-window.icon-yazi { background-image: -gtk-icontheme("yazi"); }
+#custom-window.win-dolphin, #custom-window.icon-dolphin { background-image: -gtk-icontheme("system-file-manager"); }
+#custom-window.win-nautilus, #custom-window.win-org-gnome-nautilus, #custom-window.icon-org-gnome-nautilus { background-image: -gtk-icontheme("system-file-manager"); }
+
+/* Communication */
+#custom-window.win-telegram, #custom-window.win-telegramdesktop, #custom-window.win-org-telegram-desktop, #custom-window.icon-org-telegram-desktop { background-image: -gtk-icontheme("org.telegram.desktop"); }
+#custom-window.win-discord, #custom-window.win-vesktop, #custom-window.win-webcord, #custom-window.icon-discord { background-image: -gtk-icontheme("discord"); }
+
+/* Media, Graphics & Tools */
+#custom-window.win-obs, #custom-window.win-obs-studio, #custom-window.win-com-obsproject-studio, #custom-window.icon-com-obsproject-studio { background-image: -gtk-icontheme("com.obsproject.Studio"); }
 #custom-window.win-gimp, #custom-window.icon-gimp { background-image: -gtk-icontheme("gimp"); }
-#custom-window.win-google-chrome, #custom-window.icon-google-chrome { background-image: -gtk-icontheme("google-chrome"); }
+#custom-window.win-blender, #custom-window.icon-blender { background-image: -gtk-icontheme("blender"); }
+#custom-window.win-audacity, #custom-window.icon-audacity { background-image: -gtk-icontheme("audacity"); }
+#custom-window.win-vlc, #custom-window.win-vlc-openbd, #custom-window.win-vlc-opencda, #custom-window.win-vlc-opendvd, #custom-window.win-vlc-openvcd, #custom-window.icon-vlc { background-image: -gtk-icontheme("vlc"); }
+#custom-window.win-obsidian, #custom-window.win-md-obsidian-obsidian, #custom-window.icon-obsidian { background-image: -gtk-icontheme("obsidian"); }
+#custom-window.win-openrgb, #custom-window.win-org-openrgb-openrgb, #custom-window.icon-org-openrgb-openrgb { background-image: -gtk-icontheme("org.openrgb.OpenRGB"); }
+#custom-window.win-goverlay, #custom-window.win-io-github-benjamimgois-goverlay, #custom-window.icon-io-github-benjamimgois-goverlay { background-image: -gtk-icontheme("io.github.benjamimgois.goverlay"); }
+#custom-window.win-qbittorrent, #custom-window.win-org-qbittorrent-qbittorrent, #custom-window.icon-qbittorrent { background-image: -gtk-icontheme("qbittorrent"); }
+#custom-window.win-zathura, #custom-window.win-org-pwmt-zathura, #custom-window.win-org-pwmt-zathura-pdf-mupdf, #custom-window.icon-org-pwmt-zathura { background-image: -gtk-icontheme("org.pwmt.zathura"); }
+#custom-window.win-steam, #custom-window.icon-steam { background-image: -gtk-icontheme("steam"); }
 #custom-window.win-heroic, #custom-window.icon-heroic { background-image: -gtk-icontheme("heroic"); }
-#custom-window.win-io-elementary-granite-7-demo, #custom-window.icon-io-elementary-granite-7 { background-image: -gtk-icontheme("io.elementary.granite-7"); }
-#custom-window.win-io-github-benjamimgois-goverlay, #custom-window.icon-io-github-benjamimgois-goverlay { background-image: -gtk-icontheme("io.github.benjamimgois.goverlay"); }
-#custom-window.win-java-java-openjdk, #custom-window.icon-java27-openjdk { background-image: -gtk-icontheme("java27-openjdk"); }
-#custom-window.win-jconsole-java-openjdk, #custom-window.icon-java27-openjdk { background-image: -gtk-icontheme("java27-openjdk"); }
-#custom-window.win-jshell-java-openjdk, #custom-window.icon-java27-openjdk { background-image: -gtk-icontheme("java27-openjdk"); }
-#custom-window.win-kitty, #custom-window.icon-kitty { background-image: -gtk-icontheme("kitty"); }
-#custom-window.win-kitty-open, #custom-window.icon-kitty { background-image: -gtk-icontheme("kitty"); }
-#custom-window.win-kvantummanager, #custom-window.icon-kvantum { background-image: -gtk-icontheme("kvantum"); }
-#custom-window.win-lstopo, #custom-window.icon-hwloc { background-image: -gtk-icontheme("hwloc"); }
-#custom-window.win-materialx-grapheditor, #custom-window.icon-materialx { background-image: -gtk-icontheme("materialx"); }
-#custom-window.win-materialx-view, #custom-window.icon-materialx { background-image: -gtk-icontheme("materialx"); }
-#custom-window.win-nautilus, #custom-window.icon-org-gnome-nautilus { background-image: -gtk-icontheme("org.gnome.Nautilus"); }
-#custom-window.win-neovim, #custom-window.icon-nvim { background-image: -gtk-icontheme("nvim"); }
-#custom-window.win-nm-applet, #custom-window.icon-nm-device-wireless { background-image: -gtk-icontheme("nm-device-wireless"); }
+#custom-window.win-btop, #custom-window.icon-btop { background-image: -gtk-icontheme("btop"); }
+#custom-window.win-swappy, #custom-window.icon-swappy { background-image: -gtk-icontheme("swappy"); }
+
+/* System & Utilities */
+#custom-window.win-pavucontrol, #custom-window.win-org-pulseaudio-pavucontrol, #custom-window.icon-org-pulseaudio-pavucontrol { background-image: -gtk-icontheme("org.pulseaudio.pavucontrol"); }
+#custom-window.win-blueman-manager, #custom-window.icon-blueman { background-image: -gtk-icontheme("blueman"); }
+#custom-window.win-blueman-adapters, #custom-window.icon-blueman-device { background-image: -gtk-icontheme("blueman-device"); }
 #custom-window.win-nm-connection-editor, #custom-window.icon-preferences-system-network { background-image: -gtk-icontheme("preferences-system-network"); }
-#custom-window.win-nvim, #custom-window.icon-nvim { background-image: -gtk-icontheme("nvim"); }
-#custom-window.win-obsidian, #custom-window.icon-obsidian { background-image: -gtk-icontheme("obsidian"); }
-#custom-window.win-org-gnome-gedit, #custom-window.icon-org-gnome-gedit { background-image: -gtk-icontheme("org.gnome.gedit"); }
-#custom-window.win-org-gnome-nautilus, #custom-window.icon-org-gnome-nautilus { background-image: -gtk-icontheme("org.gnome.Nautilus"); }
-#custom-window.win-org-gnupg-pinentry-qt, #custom-window.icon-pinentry { background-image: -gtk-icontheme("pinentry"); }
-#custom-window.win-org-kde-polkit-kde-authentication-agent-1, #custom-window.icon-dialog-password { background-image: -gtk-icontheme("dialog-password"); }
-#custom-window.win-org-openrgb-openrgb, #custom-window.icon-org-openrgb-openrgb { background-image: -gtk-icontheme("org.openrgb.OpenRGB"); }
-#custom-window.win-org-openusd-usdview, #custom-window.icon-openusd { background-image: -gtk-icontheme("openusd"); }
-#custom-window.win-org-pulseaudio-pavucontrol, #custom-window.icon-pavucontrol { background-image: -gtk-icontheme("pavucontrol"); }
-#custom-window.win-org-pwmt-zathura, #custom-window.icon-org-pwmt-zathura { background-image: -gtk-icontheme("org.pwmt.zathura"); }
-#custom-window.win-org-pwmt-zathura-pdf-mupdf, #custom-window.icon-org-pwmt-zathura { background-image: -gtk-icontheme("org.pwmt.zathura"); }
-#custom-window.win-org-qbittorrent-qbittorrent, #custom-window.icon-qbittorrent { background-image: -gtk-icontheme("qbittorrent"); }
-#custom-window.win-org-telegram, #custom-window.icon-org-telegram-desktop { background-image: -gtk-icontheme("org.telegram.desktop"); }
-#custom-window.win-org-telegram-desktop, #custom-window.icon-telegram { background-image: -gtk-icontheme("telegram"); }
-#custom-window.win-org-wezfurlong-wezterm, #custom-window.icon-wezterm { background-image: -gtk-icontheme("wezterm"); }
-#custom-window.win-pavucontrol, #custom-window.icon-pavucontrol { background-image: -gtk-icontheme("pavucontrol"); }
-#custom-window.win-qt5ct, #custom-window.icon-preferences-desktop-theme { background-image: -gtk-icontheme("preferences-desktop-theme"); }
-#custom-window.win-qt6ct, #custom-window.icon-preferences-desktop-theme { background-image: -gtk-icontheme("preferences-desktop-theme"); }
+#custom-window.win-nm-applet, #custom-window.icon-nm-device-wireless { background-image: -gtk-icontheme("nm-device-wireless"); }
+#custom-window.win-qt5ct, #custom-window.win-qt6ct, #custom-window.icon-preferences-desktop-theme { background-image: -gtk-icontheme("preferences-desktop-theme"); }
+#custom-window.win-kvantummanager, #custom-window.icon-kvantum { background-image: -gtk-icontheme("kvantum"); }
 #custom-window.win-qv4l2, #custom-window.icon-qv4l2 { background-image: -gtk-icontheme("qv4l2"); }
 #custom-window.win-qvidcap, #custom-window.icon-qvidcap { background-image: -gtk-icontheme("qvidcap"); }
-#custom-window.win-spotify, #custom-window.icon-spotify { background-image: -gtk-icontheme("spotify"); }
-#custom-window.win-spotify-launcher, #custom-window.icon-spotify { background-image: -gtk-icontheme("spotify"); }
-#custom-window.win-steam, #custom-window.icon-steam { background-image: -gtk-icontheme("steam"); }
-#custom-window.win-swappy, #custom-window.icon-swappy { background-image: -gtk-icontheme("swappy"); }
-#custom-window.win-telegram, #custom-window.icon-telegram { background-image: -gtk-icontheme("telegram"); }
-#custom-window.win-telegramdesktop, #custom-window.icon-telegram { background-image: -gtk-icontheme("telegram"); }
-#custom-window.win-thunar, #custom-window.icon-thunar { background-image: -gtk-icontheme("thunar"); }
-#custom-window.win-thunar-bulk-rename, #custom-window.icon-org-xfce-thunar { background-image: -gtk-icontheme("org.xfce.thunar"); }
-#custom-window.win-thunar-settings, #custom-window.icon-org-xfce-thunar { background-image: -gtk-icontheme("org.xfce.thunar"); }
-#custom-window.win-vesktop, #custom-window.icon-discord { background-image: -gtk-icontheme("discord"); }
-#custom-window.win-vlc, #custom-window.icon-vlc { background-image: -gtk-icontheme("vlc"); }
-#custom-window.win-webcord, #custom-window.icon-discord { background-image: -gtk-icontheme("discord"); }
-#custom-window.win-wezterm, #custom-window.icon-wezterm { background-image: -gtk-icontheme("wezterm"); }
-#custom-window.win-xdg-desktop-portal-gtk, #custom-window.icon-applications-system-symbolic { background-image: -gtk-icontheme("applications-system-symbolic"); }
 #custom-window.win-xfce4-about, #custom-window.icon-org-xfce-about { background-image: -gtk-icontheme("org.xfce.about"); }
-#custom-window.win-yazi, #custom-window.icon-yazi { background-image: -gtk-icontheme("yazi"); }
-#custom-window.win-zen, #custom-window.icon-zen-browser { background-image: -gtk-icontheme("zen-browser"); }
-#custom-window.win-zen-browser, #custom-window.icon-zen-browser { background-image: -gtk-icontheme("zen-browser"); }
+#custom-window.win-xdg-desktop-portal-gtk, #custom-window.icon-applications-system-symbolic { background-image: -gtk-icontheme("applications-system-symbolic"); }
+#custom-window.win-granite-7-demo, #custom-window.win-io-elementary-granite-7-demo, #custom-window.icon-io-elementary-granite-7 { background-image: -gtk-icontheme("io.elementary.granite-7"); }
+#custom-window.win-java-java-openjdk, #custom-window.win-jconsole-java-openjdk, #custom-window.win-jshell-java-openjdk, #custom-window.icon-java27-openjdk { background-image: -gtk-icontheme("java27-openjdk"); }
+#custom-window.win-materialx-grapheditor, #custom-window.win-materialx-view, #custom-window.icon-materialx { background-image: -gtk-icontheme("materialx"); }
+#custom-window.win-openusd, #custom-window.win-org-openusd-usdview, #custom-window.icon-openusd { background-image: -gtk-icontheme("openusd"); }
+#custom-window.win-avahi-discover, #custom-window.win-bssh, #custom-window.win-bvnc, #custom-window.icon-network-wired { background-image: -gtk-icontheme("network-wired"); }
+#custom-window.win-org-kde-polkit-kde-authentication-agent-1, #custom-window.icon-dialog-password { background-image: -gtk-icontheme("dialog-password"); }
+#custom-window.win-geoclue-demo-agent, #custom-window.win-geoclue-where-am-i, #custom-window.icon-mark-location-symbolic { background-image: -gtk-icontheme("mark-location-symbolic"); }
+

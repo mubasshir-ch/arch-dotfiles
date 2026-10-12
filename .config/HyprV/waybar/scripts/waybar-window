@@ -10,90 +10,205 @@ import html
 STATE_FILE = "/tmp/waybar_window_mode"
 SIGNAL_NUM = 7  # SIGRTMIN+7
 
-ICON_MAP = {
-    # Browsers
-    "zen": "",
-    "zen-browser": "",
-    "firefox": "",
-    "firefox-esr": "",
-    "google-chrome": "",
-    "google-chrome-stable": "",
-    "chromium": "",
-    "chromium-browser": "",
-    "brave-browser": "",
-    "microsoft-edge": "󰇩",
-    "opera": "",
-    "tor browser": "",
-    # Terminals & Shells
-    "kitty": "󰄛",
-    "alacritty": "",
-    "foot": "󰞷",
-    "footclient": "󰞷",
-    "wezterm": "",
-    "ghostty": "󰞷",
-    "org.gnome.console": "",
-    "gnome-terminal": "",
-    "xterm": "",
-    # Development & Editors
-    "neovim": "",
-    "nvim": "",
-    "code": "󰨞",
-    "code-oss": "󰨞",
-    "vscodium": "󰨞",
-    "sublime_text": "",
-    "emacs": "",
-    "jetbrains-idea": "",
-    "jetbrains-pycharm": "󱤓",
-    "jetbrains-clion": "",
-    "jetbrains-rustrover": "󱧼",
-    "gitkraken": "󰊢",
-    "gedit": "󰷈",
-    # Communication
-    "telegram": "",
-    "telegramdesktop": "",
-    "org.telegram.desktop": "",
-    "discord": "󰙯",
-    "vesktop": "󰙯",
-    "webcord": "󰙯",
-    "slack": "󰒱",
-    "element": "󰍡",
-    "signal": "󰭹",
-    "thunderbird": "",
-    # Media & Entertainment
-    "spotify": "",
-    "spotify-launcher": "",
-    "vlc": "󰕼",
-    "mpv": "",
-    "obs": "󰑋",
-    "obs-studio": "󰑋",
-    "steam": "",
-    "lutris": "󰺵",
-    "heroic": "󰊴",
-    # Utilities & Tools
-    "thunar": "󰉋",
-    "nautilus": "󰉋",
-    "org.gnome.nautilus": "󰉋",
-    "dolphin": "󰉋",
-    "pcmanfm": "󰉋",
-    "nemo": "󰉋",
-    "qbittorrent": "󰇚",
-    "btop": "󰓅",
-    "pavucontrol": "󰕾",
-    "org.pulseaudio.pavucontrol": "󰕾",
-    "gnome-calculator": "󰃬",
-    "org.gnome.calculator": "󰃬",
-    "gimp": "",
-    "inkscape": "",
-    "obsidian": "󰠮",
-    "libreoffice": "󱎏",
-    "libreoffice-writer": "󱎐",
-    "libreoffice-calc": "󱎏",
-    "libreoffice-impress": "󱎑",
-    "zathura": "",
-    "evince": "",
-    "org.gnome.evince": "",
-    "postman": "󱓞",
+CACHE_FILE = "/tmp/waybar_resolved_icons.json"
+STYLE_CSS_FILE = os.path.expanduser("~/dotfiles/.config/HyprV/waybar/style/style.css")
+
+# Known static mappings for instant resolution
+STATIC_ICON_MAP = {
+    "thunar": "org.xfce.thunar",
+    "thunar-bulk-rename": "org.xfce.thunar",
+    "thunar-settings": "org.xfce.thunar",
+    "telegram": "org.telegram.desktop",
+    "telegramdesktop": "org.telegram.desktop",
+    "org.telegram.desktop": "org.telegram.desktop",
+    "zen": "zen-browser",
+    "zen-browser": "zen-browser",
+    "kitty": "kitty",
+    "kitty-open": "kitty",
+    "chromium": "chromium",
+    "chromium-browser": "chromium",
+    "discord": "discord",
+    "vesktop": "discord",
+    "webcord": "discord",
+    "obs": "com.obsproject.Studio",
+    "obs-studio": "com.obsproject.Studio",
+    "com.obsproject.studio": "com.obsproject.Studio",
+    "pavucontrol": "org.pulseaudio.pavucontrol",
+    "org.pulseaudio.pavucontrol": "org.pulseaudio.pavucontrol",
+    "zathura": "org.pwmt.zathura",
+    "org.pwmt.zathura": "org.pwmt.zathura",
+    "org.pwmt.zathura-pdf-mupdf": "org.pwmt.zathura",
+    "goverlay": "io.github.benjamimgois.goverlay",
+    "io.github.benjamimgois.goverlay": "io.github.benjamimgois.goverlay",
+    "openrgb": "org.openrgb.OpenRGB",
+    "org.openrgb.openrgb": "org.openrgb.OpenRGB",
+    "qbittorrent": "qbittorrent",
+    "org.qbittorrent.qbittorrent": "qbittorrent",
+    "obsidian": "obsidian",
+    "md.obsidian.obsidian": "obsidian",
+    "gimp": "gimp",
+    "blender": "blender",
+    "audacity": "audacity",
+    "vlc": "vlc",
+    "steam": "steam",
+    "heroic": "heroic",
+    "btop": "btop",
+    "swappy": "swappy",
+    "yazi": "yazi",
+    "nvim": "nvim",
+    "neovim": "nvim",
+    "gedit": "org.gnome.gedit",
+    "org.gnome.gedit": "org.gnome.gedit",
+    "code": "accessories-text-editor",
+    "code-oss": "accessories-text-editor",
+    "vscodium": "accessories-text-editor",
+    "alacritty": "utilities-terminal",
+    "foot": "utilities-terminal",
+    "footclient": "utilities-terminal",
+    "wezterm": "utilities-terminal",
+    "org.wezfurlong.wezterm": "utilities-terminal",
+    "dolphin": "system-file-manager",
+    "nautilus": "system-file-manager",
+    "org.gnome.nautilus": "system-file-manager",
+    "firefox": "web-browser",
+    "firefox-esr": "web-browser",
+    "google-chrome": "web-browser",
+    "google-chrome-stable": "web-browser",
+    "brave-browser": "web-browser",
+    "blueman-manager": "blueman",
+    "blueman-adapters": "blueman-device",
+    "nm-connection-editor": "preferences-system-network",
+    "nm-applet": "nm-device-wireless",
+    "qt5ct": "preferences-desktop-theme",
+    "qt6ct": "preferences-desktop-theme",
+    "kvantummanager": "kvantum",
+    "qv4l2": "qv4l2",
+    "qvidcap": "qvidcap",
+    "xfce4-about": "org.xfce.about",
 }
+
+def resolve_icon(app_class, initial_class):
+    classes = [c.lower() for c in [app_class, initial_class] if c]
+    for c in classes:
+        if c in STATIC_ICON_MAP:
+            return STATIC_ICON_MAP[c]
+
+    # Check cache file
+    cache = {}
+    if os.path.exists(CACHE_FILE):
+        try:
+            with open(CACHE_FILE, "r") as f:
+                cache = json.load(f)
+            for c in classes:
+                if c in cache:
+                    return cache[c]
+        except Exception:
+            pass
+
+    # Dynamic fallback: lazy import GTK & inspect desktop files
+    try:
+        import gi
+        gi.require_version("Gtk", "3.0")
+        from gi.repository import Gtk
+        import glob
+        import configparser
+
+        theme = Gtk.IconTheme.get_default()
+
+        # 1. Direct theme check
+        for c in classes:
+            for cand in [c, c.replace(".", "-")]:
+                if theme.has_icon(cand):
+                    cache[c] = cand
+                    with open(CACHE_FILE, "w") as f:
+                        json.dump(cache, f)
+                    return cand
+
+        # 2. Desktop files scan
+        desktop_dirs = ["/usr/share/applications", os.path.expanduser("~/.local/share/applications")]
+        entries = []
+        for d in desktop_dirs:
+            for f in glob.glob(d + "/**/*.desktop", recursive=True):
+                cp = configparser.ConfigParser(interpolation=None)
+                try:
+                    cp.read(f, encoding="utf-8")
+                    if "Desktop Entry" in cp:
+                        entry = cp["Desktop Entry"]
+                        icon = entry.get("Icon")
+                        wm = entry.get("StartupWMClass")
+                        base = os.path.splitext(os.path.basename(f))[0]
+                        if icon and theme.has_icon(icon):
+                            entries.append({"base": base, "wm": wm, "icon": icon})
+                except Exception:
+                    pass
+
+        resolved = None
+        for c in classes:
+            for e in entries:
+                if e["wm"] and e["wm"].lower() == c:
+                    resolved = e["icon"]
+                    break
+            if resolved:
+                break
+            for e in entries:
+                if e["base"].lower() == c:
+                    resolved = e["icon"]
+                    break
+            if resolved:
+                break
+            for e in entries:
+                b_parts = e["base"].lower().replace("-", ".").split(".")
+                if c in b_parts:
+                    resolved = e["icon"]
+                    break
+            if resolved:
+                break
+
+        if resolved:
+            for c in classes:
+                cache[c] = resolved
+            try:
+                with open(CACHE_FILE, "w") as f:
+                    json.dump(cache, f)
+            except Exception:
+                pass
+            return resolved
+
+    except Exception:
+        pass
+
+    return None
+
+def auto_register_rule_if_needed(icon_name, app_class, initial_class):
+    if not icon_name:
+        return
+    clean_icon = icon_name.replace(".", "-").lower()
+    clean_class = (app_class or "").replace(".", "-").lower()
+    clean_init = (initial_class or "").replace(".", "-").lower()
+
+    try:
+        if not os.path.exists(STYLE_CSS_FILE):
+            return
+        with open(STYLE_CSS_FILE, "r", encoding="utf-8") as f:
+            css_content = f.read()
+
+        if f".icon-{clean_icon}" in css_content or (clean_class and f".win-{clean_class}" in css_content):
+            return
+
+        selectors = [f"#custom-window.icon-{clean_icon}"]
+        if clean_class:
+            selectors.append(f"#custom-window.win-{clean_class}")
+        if clean_init and clean_init != clean_class:
+            selectors.append(f"#custom-window.win-{clean_init}")
+
+        rule = f"{', '.join(selectors)} {{ background-image: -gtk-icontheme(\"{icon_name}\"); }}\n"
+        with open(STYLE_CSS_FILE, "a", encoding="utf-8") as f:
+            f.write(rule)
+
+        subprocess.run(["pkill", "-SIGUSR2", "waybar"], stderr=subprocess.DEVNULL)
+    except Exception:
+        pass
+
 
 def toggle():
     mode = "compact"
@@ -235,11 +350,17 @@ def render():
 
     tooltip = f"<span font_family='JetBrainsMono Nerd Font'>\n" + "\n".join(lines) + "\n</span>"
 
+    icon_name = resolve_icon(app_class, initial_class)
+    if icon_name:
+        auto_register_rule_if_needed(icon_name, app_class, initial_class)
+
     cls_parts = [mode]
     if app_class:
         cls_parts.append(f"win-{app_class.replace('.', '-').lower()}")
     if initial_class and initial_class != app_class:
         cls_parts.append(f"win-{initial_class.replace('.', '-').lower()}")
+    if icon_name:
+        cls_parts.append(f"icon-{icon_name.replace('.', '-').lower()}")
 
     output = {
         "text": bar_text,
