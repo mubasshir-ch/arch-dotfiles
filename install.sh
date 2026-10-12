@@ -66,6 +66,7 @@ OFFICIAL_PACKAGES=(
     swaylock
     waybar
     wofi
+    swaync
     mako
     swaybg
     awww
@@ -86,11 +87,13 @@ OFFICIAL_PACKAGES=(
     ripgrep
     fd
     fzf
+    jq
     nodejs
     npm
     python
     python-pynvim
     python-requests
+    python-gobject
     unzip
     curl
 
@@ -119,8 +122,11 @@ OFFICIAL_PACKAGES=(
     brightnessctl
     pacman-contrib
     libnotify
+    gvfs
 
     # Qt & GTK Theming Engines
+    gtk3
+    gtk4
     qt5ct
     qt6ct
     qt5-wayland
@@ -334,6 +340,7 @@ CONFIG_ENTRIES=(
     "qt5ct"
     "qt6ct"
     "swaylock"
+    "swaync"
     "waybar"
     "wofi"
 )
@@ -408,6 +415,13 @@ fi
 
 
 
+# Disable conflicting legacy notification daemon if active (SwayNC is used by Hyprland)
+if command -v mako &>/dev/null; then
+    info "Disabling legacy mako notification service in favor of SwayNC..."
+    systemctl --user disable --now mako.service 2>/dev/null || true
+    pkill mako 2>/dev/null || true
+fi
+
 # Enable SDDM service
 info "Enabling SDDM service..."
 sudo systemctl enable sddm 2>/dev/null || true
@@ -432,5 +446,6 @@ echo -e "${CYAN}Next Steps:${NC}"
 echo -e " 1. ${BOLD}Install Tmux Plugins:${NC} Open tmux and press ${BOLD}Ctrl+b${NC} then ${BOLD}Shift+i${NC} (I)."
 echo -e " 2. ${BOLD}Start Hyprland:${NC} Log in or run ${BOLD}Hyprland${NC}."
 echo -e " 3. ${BOLD}Telegram Theme:${NC} In Telegram Desktop, open or apply ${BOLD}~/.local/share/TelegramDesktop/themes/catppuccin-mocha.tdesktop-theme${NC}."
+echo -e " 4. ${BOLD}Notification Center (SwayNC):${NC} Toggle with ${BOLD}Super + A${NC} or click the bell icon in Waybar."
 echo ""
 
