@@ -67,6 +67,7 @@ tooltip label {
 #custom-bluetooth,
 #temperature,
 #custom-sysmon,
+#custom-hypridle,
 #workspaces,
 #tray,
 #backlight,
@@ -90,6 +91,29 @@ tooltip label {
   color: #b4befe;
   border-radius: 10px;
   margin-right: 10px;
+}
+
+#custom-hypridle {
+  color: #b4befe;
+  border-radius: 10px;
+  margin-right: 10px;
+  font-size: 15px;
+}
+
+#custom-hypridle.performance {
+  color: #fab387; /* Catppuccin Mocha Peach (Awake) */
+}
+
+#custom-hypridle.server {
+  color: #89b4fa; /* Catppuccin Mocha Blue (Server) */
+}
+
+#custom-hypridle.balanced {
+  color: #a6e3a1; /* Catppuccin Mocha Green (Balanced) */
+}
+
+#custom-hypridle.power-saver {
+  color: #f9e2af; /* Catppuccin Mocha Yellow (Power Saver) */
 }
 
 /*close to the right */

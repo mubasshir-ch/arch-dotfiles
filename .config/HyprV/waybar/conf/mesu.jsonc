@@ -61,6 +61,16 @@
         "return-type": "json",
         "on-click": "kitty --start-as=fullscreen --title btop sh -c 'btop'"
     },
+    "custom/hypridle": {
+        "format": "{}",
+        "return-type": "json",
+        "exec": "~/.local/bin/hypridle-ctl status",
+        "on-click": "~/.local/bin/hypridle-ctl next",
+        "on-click-right": "~/.local/bin/hypridle-ctl prev",
+        "interval": 30,
+        "signal": 10,
+        "tooltip": true
+    },
     "temperature": {
         "hwmon-path-abs": "/sys/devices/pci0000:00/0000:00:18.3/hwmon",
         "input-filename": "temp1_input",

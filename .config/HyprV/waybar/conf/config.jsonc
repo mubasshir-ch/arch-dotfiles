@@ -18,6 +18,7 @@
         "network",
         "custom/bluetooth",
         "custom/sysmon",
+        "custom/hypridle",
         "custom/power_profile",
         "battery",
         "backlight",
