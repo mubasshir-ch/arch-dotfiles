@@ -329,6 +329,7 @@ done
 # Config directories managed by dotfiles
 mkdir -p "$HOME/.config"
 CONFIG_ENTRIES=(
+    "btop"
     "gtk-3.0"
     "gtk-4.0"
     "hypr"
