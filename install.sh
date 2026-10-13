@@ -88,6 +88,14 @@ OFFICIAL_PACKAGES=(
     fd
     fzf
     jq
+    bat
+    glow
+    zoxide
+    ffmpegthumbnailer
+    unrar
+    imagemagick
+    chafa
+    resvg
     nodejs
     npm
     python
@@ -343,6 +351,7 @@ CONFIG_ENTRIES=(
     "swaync"
     "waybar"
     "wofi"
+    "yazi"
 )
 
 for dir in "${CONFIG_ENTRIES[@]}"; do

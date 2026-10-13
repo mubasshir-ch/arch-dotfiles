@@ -1,0 +1,22 @@
+# Yazi Keymap Configuration
+
+[mgr]
+prepend_keymap = [
+	# Zoxide jump
+	{ on = [ "z" ], run = "plugin zoxide", desc = "Jump to directory using Zoxide" },
+
+	# Quick shell & editor
+	{ on = [ "T" ], run = 'shell "kitty --directory \"$PWD\" &" --confirm', desc = "Open Kitty terminal here" },
+	{ on = [ "E" ], run = 'shell "${EDITOR:-nvim} \"$@\"" --block', desc = "Open in Neovim" },
+
+	# Copy paths
+	{ on = [ "y", "p" ], run = 'shell "printf \'%s\' \"$1\" | wl-copy" --confirm', desc = "Copy filename to clipboard" },
+	{ on = [ "y", "P" ], run = 'shell "printf \'%s\' \"$PWD/$1\" | wl-copy" --confirm', desc = "Copy full path to clipboard" },
+
+	# Preview scrolling
+	{ on = [ "<C-e>" ], run = "seek 5", desc = "Scroll preview down" },
+	{ on = [ "<C-y>" ], run = "seek -5", desc = "Scroll preview up" },
+
+	# Toggle hidden files
+	{ on = [ "." ], run = "hidden toggle", desc = "Toggle hidden files" },
+]
