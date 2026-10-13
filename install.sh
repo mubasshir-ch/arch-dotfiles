@@ -118,11 +118,19 @@ OFFICIAL_PACKAGES=(
 
     # GUI Apps & Tools
     thunar
-    qbittorrent
-    brightnessctl
-    pacman-contrib
-    libnotify
+    thunar-volman
+    thunar-archive-plugin
+    xarchiver
+    tumbler
+    ffmpegthumbnailer
+    webp-pixbuf-loader
+    udisks2
     gvfs
+    gvfs-mtp
+    gvfs-smb
+    exfatprogs
+    dosfstools
+    qbittorrent
 
     # Qt & GTK Theming Engines
     gtk3
@@ -341,6 +349,7 @@ CONFIG_ENTRIES=(
     "qt6ct"
     "swaylock"
     "swaync"
+    "Thunar"
     "waybar"
     "wofi"
 )
