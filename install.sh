@@ -298,6 +298,7 @@ chmod +x "$DOTFILES_DIR"/.config/hypr/*.sh 2>/dev/null || true
 chmod +x "$DOTFILES_DIR"/.config/hypr/xdg-portal-hyprland 2>/dev/null || true
 chmod +x "$DOTFILES_DIR"/.config/HyprV/hyprv_util 2>/dev/null || true
 chmod +x "$DOTFILES_DIR"/.config/HyprV/waybar/scripts/* 2>/dev/null || true
+chmod +x "$DOTFILES_DIR"/.local/bin/* 2>/dev/null || true
 chmod +x "$DOTFILES_DIR"/install.sh 2>/dev/null || true
 success "Permissions set."
 
@@ -421,6 +422,11 @@ if command -v mako &>/dev/null; then
     systemctl --user disable --now mako.service 2>/dev/null || true
     pkill mako 2>/dev/null || true
 fi
+
+# Enable system update notification timer
+info "Enabling system update notifier user timer..."
+systemctl --user daemon-reload 2>/dev/null || true
+systemctl --user enable --now sysupdate-notify.timer 2>/dev/null || true
 
 # Enable SDDM service
 info "Enabling SDDM service..."
