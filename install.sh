@@ -246,7 +246,7 @@ AUR_PACKAGES=(
 )
 
 info "Installing AUR packages via yay..."
-yay -S --needed --noconfirm "${AUR_PACKAGES[@]}"
+yay -S --needed --noconfirm --overwrite '/usr/share/themes/*,/usr/share/icons/*' "${AUR_PACKAGES[@]}"
 
 # GPU Driver check & suggestion
 info "Checking GPU hardware..."
@@ -322,6 +322,13 @@ fi
 if command -v papirus-folders &>/dev/null; then
     info "Applying Catppuccin Mocha Lavender folder colors to Papirus-Dark..."
     papirus-folders -C cat-mocha-lavender --theme Papirus-Dark || true
+fi
+
+if command -v xfconf-query &>/dev/null; then
+    xfconf-query -c xsettings -p /Gtk/CursorThemeName -n -t string -s "catppuccin-mocha-dark-cursors" 2>/dev/null || true
+    xfconf-query -c xsettings -p /Gtk/CursorThemeSize -n -t int -s 24 2>/dev/null || true
+    xfconf-query -c xsettings -p /Net/ThemeName -n -t string -s "catppuccin-mocha-lavender-standard+default" 2>/dev/null || true
+    xfconf-query -c xsettings -p /Net/IconThemeName -n -t string -s "Papirus-Dark" 2>/dev/null || true
 fi
 
 # Catppuccin Theme for Telegram Desktop
@@ -402,7 +409,6 @@ CONFIG_ENTRIES=(
     "kitty"
     "mako"
     "nvim"
-    "opencode"
     "qBittorrent"
     "qt5ct"
     "qt6ct"
@@ -493,6 +499,14 @@ else
     printf "auth {\n    fingerprint {\n        enabled = true\n    }\n}\n" > "$HYPRLOCK_DEVICE_CONF"
 fi
 
+# Generate GPU-specific environment override (only source env_var_nvidia.conf when NVIDIA GPU is present)
+ENV_VAR_DEVICE_CONF="$HOME/.config/hypr/env_var_device.conf"
+if command -v lspci &>/dev/null && lspci | grep -qi nvidia; then
+    echo "source = ~/.config/hypr/env_var_nvidia.conf" > "$ENV_VAR_DEVICE_CONF"
+else
+    echo "# Non-NVIDIA GPU: skipping env_var_nvidia.conf" > "$ENV_VAR_DEVICE_CONF"
+fi
+
 # ------------------------------------------------------------------------------
 # 8. Desktop Associations, Hardware Daemons & System Services
 # ------------------------------------------------------------------------------
@@ -555,9 +569,14 @@ if is_desktop; then
         systemctl --user daemon-reload 2>/dev/null || true
         systemctl --user enable --now openrgb-server.service openrgb-breathing-colorshift.service 2>/dev/null || true
     fi
+
+    # Link desktop OpenCode local llama-server config
+    mkdir -p "$HOME/.config/opencode"
+    ln -sf "$DOTFILES_DIR/.config/opencode/opencode.json" "$HOME/.config/opencode/opencode.json"
 else
-    info "Laptop/portable chassis detected. Skipping desktop hardware configs (LACT, T-Wolf AIO, OpenRGB)..."
-    systemctl --user disable --now openrgb-server.service openrgb-breathing-colorshift.service twolf-aio.service 2>/dev/null || true
+    info "Laptop/portable chassis detected. Skipping desktop hardware configs (LACT, T-Wolf AIO, OpenRGB, local llama OpenCode)..."
+    systemctl --user stop openrgb-server.service openrgb-breathing-colorshift.service twolf-aio.service 2>/dev/null || true
+    rm -f "$HOME/.config/systemd/user/default.target.wants/"{openrgb-server,openrgb-breathing-colorshift,twolf-aio}.service 2>/dev/null || true
 fi
 
 # Disable conflicting legacy notification daemon if active (SwayNC is used by Hyprland)

@@ -2,6 +2,7 @@
 ^usr
 ^etc
 ^openrgb
+^\.config/opencode
 ^\.git
 ^\.gitmodules
 ^\.gitignore
