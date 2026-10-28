@@ -53,11 +53,6 @@ All custom Waybar modules live in `.config/HyprV/waybar/scripts/` and are styled
   - Sets `NVreg_PreserveVideoMemoryAllocations=1` and enables `nvidia-suspend.service`, `nvidia-hibernate.service`, and `nvidia-resume.service` so Wayland/Hyprland wakes cleanly from suspend.
 - **T-Wolf AIO Cooler Display Driver (`.local/bin/twolf-aio` & `etc/udev/rules.d/99-twolf.rules`)**
   - Deployed when USB HID `5131:2017` is detected. Pure-Python `hidraw` daemon (`twolf-aio.service`) that streams live CPU/GPU temperatures and utilization to the AIO LCD every second using Windows `hid.dll`-compatible framing.
-- **Dual-Boot Bluetooth LinkKey Sync (`.local/bin/bt-dualboot-sync`)**
-  - Extracts Bluetooth pairing `LinkKey`s directly from a mounted Windows `SYSTEM` registry hive and syncs them into `/var/lib/bluetooth/<Adapter>/<Device>/info`:
-    ```bash
-    sudo ~/.local/bin/bt-dualboot-sync /mnt/win/Windows/System32/config/SYSTEM --apply
-    ```
 - **On-Demand Local Qwen3.5-9B Server (`llama-qwen35.service`)**
   - Configured for `opencode` (`.config/opencode/opencode.json`) on `http://127.0.0.1:8080/v1`. Kept disabled on boot to save VRAM; start on demand with:
     ```bash

@@ -364,11 +364,20 @@ mkdir -p "$BACKUP_DIR"
 BACKUP_OCCURRED=false
 
 # Root home files managed by dotfiles
-HOME_FILES=(".bashrc" ".zshrc" ".tmux.conf" ".gtkrc-2.0" ".icons")
+HOME_FILES=(".bashrc" ".zshrc" ".tmux.conf" ".gtkrc-2.0" ".icons/default/index.theme")
+
+# ~/.icons must stay a real directory (user-installed icon/cursor themes live there).
+# Only ~/.icons/default/index.theme is managed. Unfold any old whole-dir symlink first.
+if [[ -L "$HOME/.icons" ]]; then
+    info "Replacing ~/.icons directory symlink with a real directory..."
+    rm -f "$HOME/.icons"
+fi
+mkdir -p "$HOME/.icons/default"
 for file in "${HOME_FILES[@]}"; do
     TARGET="$HOME/$file"
     if [[ -e "$TARGET" && ! -L "$TARGET" ]]; then
         info "Backing up existing $TARGET -> $BACKUP_DIR/$file"
+        mkdir -p "$(dirname "$BACKUP_DIR/$file")"
         mv "$TARGET" "$BACKUP_DIR/$file"
         BACKUP_OCCURRED=true
     elif [[ -L "$TARGET" ]]; then
@@ -497,20 +506,6 @@ if command -v xdg-mime &>/dev/null; then
     for mime in image/png image/jpeg image/gif image/webp image/bmp image/svg+xml image/tiff image/avif; do
         xdg-mime default swayimg.desktop "$mime" 2>/dev/null || true
     done
-fi
-
-# Apply Node 26 fetch() header patch to copilot.lua if present
-COPILOT_MAIN_JS="$HOME/.local/share/nvim/lazy/copilot.lua/copilot/js/main.js"
-if [[ -f "$COPILOT_MAIN_JS" ]] && ! grep -q " NODE26_COPILOT_HEADER_PATCH" "$COPILOT_MAIN_JS"; then
-    info "Applying idempotent Node 26 header compatibility patch to copilot.lua..."
-    python3 -c '
-import pathlib
-p = pathlib.Path.home() / ".local/share/nvim/lazy/copilot.lua/copilot/js/main.js"
-text = p.read_text(encoding="utf-8", errors="ignore")
-if "NODE26_COPILOT_HEADER_PATCH" not in text:
-    patch = "// NODE26_COPILOT_HEADER_PATCH\n"
-    p.write_text(patch + text, encoding="utf-8")
-' 2>/dev/null || true
 fi
 
 # Enable essential systemd services
