@@ -357,9 +357,10 @@ for file in "${HOME_FILES[@]}"; do
         mv "$TARGET" "$BACKUP_DIR/$file"
         BACKUP_OCCURRED=true
     elif [[ -L "$TARGET" ]]; then
+        RAW_LINK="$(readlink "$TARGET" || true)"
         LINK_TARGET="$(readlink -f "$TARGET" || true)"
-        if [[ "$LINK_TARGET" != "$DOTFILES_DIR/$file" ]]; then
-            info "Removing stale symlink $TARGET"
+        if [[ "$LINK_TARGET" != "$DOTFILES_DIR/$file" || "$RAW_LINK" == /* ]]; then
+            info "Removing non-stow/stale symlink $TARGET"
             rm -rf "$TARGET"
         fi
     fi
@@ -397,9 +398,10 @@ for dir in "${CONFIG_ENTRIES[@]}"; do
         mv "$TARGET" "$BACKUP_DIR/.config/$dir"
         BACKUP_OCCURRED=true
     elif [[ -L "$TARGET" ]]; then
+        RAW_LINK="$(readlink "$TARGET" || true)"
         LINK_TARGET="$(readlink -f "$TARGET" || true)"
-        if [[ "$LINK_TARGET" != "$DOTFILES_DIR/.config/$dir" ]]; then
-            info "Removing stale symlink $TARGET"
+        if [[ "$LINK_TARGET" != "$DOTFILES_DIR/.config/$dir" || "$RAW_LINK" == /* ]]; then
+            info "Removing non-stow/stale symlink $TARGET"
             rm -rf "$TARGET"
         fi
     fi
@@ -416,8 +418,9 @@ for unit_src in "$DOTFILES_DIR"/.config/systemd/user/*; do
         mv "$TARGET" "$BACKUP_DIR/.config/systemd/user/$unit_name"
         BACKUP_OCCURRED=true
     elif [[ -L "$TARGET" ]]; then
+        RAW_LINK="$(readlink "$TARGET" || true)"
         LINK_TARGET="$(readlink -f "$TARGET" || true)"
-        if [[ "$LINK_TARGET" != "$unit_src" ]]; then
+        if [[ "$LINK_TARGET" != "$unit_src" || "$RAW_LINK" == /* ]]; then
             rm -f "$TARGET"
         fi
     fi
@@ -432,8 +435,9 @@ for bin_src in "$DOTFILES_DIR"/.local/bin/*; do
         mv "$TARGET" "$BACKUP_DIR/.local/bin/$bin_name"
         BACKUP_OCCURRED=true
     elif [[ -L "$TARGET" ]]; then
+        RAW_LINK="$(readlink "$TARGET" || true)"
         LINK_TARGET="$(readlink -f "$TARGET" || true)"
-        if [[ "$LINK_TARGET" != "$bin_src" ]]; then
+        if [[ "$LINK_TARGET" != "$bin_src" || "$RAW_LINK" == /* ]]; then
             rm -f "$TARGET"
         fi
     fi
