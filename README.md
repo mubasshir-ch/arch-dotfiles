@@ -40,9 +40,9 @@ All custom Waybar modules live in `.config/HyprV/waybar/scripts/` and are styled
 
 ---
 
-## 3. Hardware & System Daemons
+## 3. Hardware & System Daemons (Desktop Auto-Detection)
 
-`install.sh` automatically detects hardware and deploys the corresponding configurations only on matching machines:
+`install.sh`, `hyprland.conf`, and the `systemd` user units automatically distinguish **Desktop** vs. **Laptop** via `/sys/class/dmi/id/chassis_type` (`3–7` = Desktop) and `/sys/class/power_supply/BAT*` (`ConditionPathExistsGlob=!/sys/class/power_supply/BAT*`). On a laptop, desktop-only packages (`lact`, `openrgb`, `i2c-tools`, `nvtop`) and hardware daemons are automatically skipped, while laptop utilities (`rot8`, `tablet-mode.sh`) are started instead:
 
 - **OpenRGB Breathing + Color-Shift Daemon (`openrgb/openrgb_breathing_colorshift.py`)**
   - Uses OpenRGB SDK Protocol v6 to auto-resize `JRAINBOW1`/`JRAINBOW2` ARGB headers to 20 LEDs and synchronize a smooth 4.75s cosine breathing + 60s 360° HSV color wheel across motherboard fans, RAM, mouse, and EVision keyboard.

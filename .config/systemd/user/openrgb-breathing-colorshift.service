@@ -2,6 +2,8 @@
 Description=OpenRGB Custom Breathing + 60s Color Shift Effect
 After=openrgb-server.service
 Requires=openrgb-server.service
+ConditionPathExistsGlob=!/sys/class/power_supply/BAT*
+ConditionPathExists=/usr/bin/openrgb
 
 [Service]
 Type=simple

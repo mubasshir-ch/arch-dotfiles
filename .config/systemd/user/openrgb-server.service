@@ -1,5 +1,7 @@
 [Unit]
 Description=OpenRGB SDK Server
+ConditionPathExistsGlob=!/sys/class/power_supply/BAT*
+ConditionPathExists=/usr/bin/openrgb
 
 [Service]
 Type=simple

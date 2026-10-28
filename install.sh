@@ -21,6 +21,12 @@ error() { echo -e "${RED}[ERROR]${NC} $*" >&2; }
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKUP_DIR="$HOME/.dotfiles_backup/$(date +%Y%m%d_%H%M%S)"
 
+is_desktop() {
+    # True when no battery is present AND DMI chassis_type is Desktop/Tower (3,4,5,6,7)
+    ! compgen -G "/sys/class/power_supply/BAT*" >/dev/null && \
+    grep -qE '^(3|4|5|6|7)$' /sys/class/dmi/id/chassis_type 2>/dev/null
+}
+
 # ------------------------------------------------------------------------------
 # 1. Pre-flight Checks
 # ------------------------------------------------------------------------------
@@ -164,13 +170,9 @@ OFFICIAL_PACKAGES=(
     glib2
     dconf
 
-    # System Monitors, Hardware, RGB & Dev Tools
+    # System Monitors, Shell & Dev Tools
     btop
-    nvtop
     vulkan-tools
-    lact
-    openrgb
-    i2c-tools
     github-cli
     lazygit
     docker
@@ -216,6 +218,19 @@ OFFICIAL_PACKAGES=(
 
 info "Installing official repository packages via pacman..."
 sudo pacman -S --needed --noconfirm "${OFFICIAL_PACKAGES[@]}"
+
+if is_desktop; then
+    DESKTOP_PACKAGES=(
+        lact
+        openrgb
+        i2c-tools
+        nvtop
+    )
+    info "Desktop chassis detected. Installing desktop hardware packages (${DESKTOP_PACKAGES[*]})..."
+    sudo pacman -S --needed --noconfirm "${DESKTOP_PACKAGES[@]}"
+else
+    info "Laptop/portable chassis detected. Skipping desktop-only hardware packages (lact, openrgb, i2c-tools, nvtop)."
+fi
 
 # AUR Packages required by dotfiles
 AUR_PACKAGES=(
@@ -497,41 +512,49 @@ sudo systemctl enable --now NetworkManager.service 2>/dev/null || true
 sudo systemctl enable docker.service 2>/dev/null || true
 sudo usermod -aG docker "$USER" 2>/dev/null || true
 
-# Hardware-guarded: NVIDIA suspend/resume preservation & RTX 3060 Ti LACT undervolt
-if command -v lspci &>/dev/null && lspci | grep -qi nvidia; then
-    if [[ -f "$DOTFILES_DIR/etc/modprobe.d/nvidia-power-management.conf" ]]; then
-        info "Installing NVIDIA video memory preservation modprobe config..."
-        sudo cp -f "$DOTFILES_DIR/etc/modprobe.d/nvidia-power-management.conf" /etc/modprobe.d/nvidia-power-management.conf
-    fi
-    sudo systemctl enable nvidia-suspend.service nvidia-hibernate.service nvidia-resume.service 2>/dev/null || true
+# Hardware-guarded: Desktop-only daemons & GPU/AIO/RGB configs
+if is_desktop; then
+    info "Desktop chassis detected. Applying desktop hardware & daemon configurations..."
 
-    if lspci -nn | grep -qi "10de:2489" && [[ -f "$DOTFILES_DIR/etc/lact/config.yaml" ]]; then
-        info "RTX 3060 Ti (10DE:2489) detected. Installing LACT undervolt profile (1890 MHz @ 900 mV)..."
-        sudo mkdir -p /etc/lact
-        sudo cp -f "$DOTFILES_DIR/etc/lact/config.yaml" /etc/lact/config.yaml
-        sudo systemctl enable --now lactd.service 2>/dev/null || true
-    fi
-fi
+    # NVIDIA suspend/resume preservation & RTX 3060 Ti LACT undervolt
+    if command -v lspci &>/dev/null && lspci | grep -qi nvidia; then
+        if [[ -f "$DOTFILES_DIR/etc/modprobe.d/nvidia-power-management.conf" ]]; then
+            info "Installing NVIDIA video memory preservation modprobe config..."
+            sudo cp -f "$DOTFILES_DIR/etc/modprobe.d/nvidia-power-management.conf" /etc/modprobe.d/nvidia-power-management.conf
+        fi
+        sudo systemctl enable nvidia-suspend.service nvidia-hibernate.service nvidia-resume.service 2>/dev/null || true
 
-# Hardware-guarded: T-Wolf AIO CPU temperature USB HID daemon (5131:2017)
-if command -v lsusb &>/dev/null && lsusb -d 5131:2017 &>/dev/null; then
-    info "T-Wolf AIO display (5131:2017) detected. Configuring udev rule and twolf-aio service..."
-    if [[ -f "$DOTFILES_DIR/etc/udev/rules.d/99-twolf.rules" ]]; then
-        sudo cp -f "$DOTFILES_DIR/etc/udev/rules.d/99-twolf.rules" /etc/udev/rules.d/99-twolf.rules
-        sudo udevadm control --reload-rules 2>/dev/null || true
-        sudo udevadm trigger 2>/dev/null || true
+        if lspci -nn | grep -qi "10de:2489" && [[ -f "$DOTFILES_DIR/etc/lact/config.yaml" ]]; then
+            info "RTX 3060 Ti (10DE:2489) detected. Installing LACT undervolt profile (1890 MHz @ 900 mV)..."
+            sudo mkdir -p /etc/lact
+            sudo cp -f "$DOTFILES_DIR/etc/lact/config.yaml" /etc/lact/config.yaml
+            sudo systemctl enable --now lactd.service 2>/dev/null || true
+        fi
     fi
-    systemctl --user disable --now twolf-cooler.service 2>/dev/null || true
-    rm -f "$HOME/.config/systemd/user/twolf-cooler.service" "$HOME/.local/bin/twolf-cooler.py"
-    systemctl --user daemon-reload 2>/dev/null || true
-    systemctl --user enable --now twolf-aio.service 2>/dev/null || true
-fi
 
-# Hardware-guarded: OpenRGB server & breathing color-shift daemon
-if command -v openrgb &>/dev/null; then
-    info "Enabling OpenRGB server & custom breathing color-shift user services..."
-    systemctl --user daemon-reload 2>/dev/null || true
-    systemctl --user enable --now openrgb-server.service openrgb-breathing-colorshift.service 2>/dev/null || true
+    # T-Wolf AIO CPU temperature USB HID daemon (5131:2017)
+    if command -v lsusb &>/dev/null && lsusb -d 5131:2017 &>/dev/null; then
+        info "T-Wolf AIO display (5131:2017) detected. Configuring udev rule and twolf-aio service..."
+        if [[ -f "$DOTFILES_DIR/etc/udev/rules.d/99-twolf.rules" ]]; then
+            sudo cp -f "$DOTFILES_DIR/etc/udev/rules.d/99-twolf.rules" /etc/udev/rules.d/99-twolf.rules
+            sudo udevadm control --reload-rules 2>/dev/null || true
+            sudo udevadm trigger 2>/dev/null || true
+        fi
+        systemctl --user disable --now twolf-cooler.service 2>/dev/null || true
+        rm -f "$HOME/.config/systemd/user/twolf-cooler.service" "$HOME/.local/bin/twolf-cooler.py"
+        systemctl --user daemon-reload 2>/dev/null || true
+        systemctl --user enable --now twolf-aio.service 2>/dev/null || true
+    fi
+
+    # OpenRGB server & breathing color-shift daemon
+    if command -v openrgb &>/dev/null; then
+        info "Enabling OpenRGB server & custom breathing color-shift user services..."
+        systemctl --user daemon-reload 2>/dev/null || true
+        systemctl --user enable --now openrgb-server.service openrgb-breathing-colorshift.service 2>/dev/null || true
+    fi
+else
+    info "Laptop/portable chassis detected. Skipping desktop hardware configs (LACT, T-Wolf AIO, OpenRGB)..."
+    systemctl --user disable --now openrgb-server.service openrgb-breathing-colorshift.service twolf-aio.service 2>/dev/null || true
 fi
 
 # Disable conflicting legacy notification daemon if active (SwayNC is used by Hyprland)
