@@ -15,12 +15,11 @@
         "custom/window"
     ],
     "modules-right": [
+        "custom/sysmon",
+        "battery",
+        "custom/hypridle",
         "network",
         "custom/bluetooth",
-        "custom/sysmon",
-        "custom/hypridle",
-        "custom/power_profile",
-        "battery",
         "backlight",
         "pulseaudio",
         "pulseaudio#microphone",

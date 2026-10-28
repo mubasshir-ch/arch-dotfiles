@@ -86,19 +86,34 @@ tooltip label {
   border-radius: 10px 0px 0px 10px;
 }
 
-#temperature,
-#custom-sysmon {
+#temperature {
   color: #b4befe;
   border-radius: 10px;
   margin-right: 10px;
 }
 
+/* Combined Hardware & Power Pill [ Sysmon (btop) | Hypridle | Charge ] */
+#custom-sysmon {
+  color: #b4befe;
+  border-radius: 10px 0px 0px 10px;
+  border-right: 0px;
+  margin-right: 0px;
+  padding-right: 10px;
+}
+
 #custom-hypridle {
   color: #b4befe;
-  border-radius: 10px;
+  border-radius: 0px 10px 10px 0px;
+  border-left: 0px;
+  border-right: 1px solid #181825;
+  margin-left: 0px;
   margin-right: 10px;
+  padding-left: 10px;
+  padding-right: 14px;
   font-size: 15px;
 }
+
+
 
 #custom-hypridle.performance {
   color: #fab387; /* Catppuccin Mocha Peach (Awake) */
@@ -245,8 +260,13 @@ window#waybar.empty #custom-window,
 
 #battery {
   color: #b4befe;
-  border-radius: 10px;
-  margin-right: 10px;
+  border-radius: 0px;
+  border-left: 0px;
+  border-right: 0px;
+  margin-left: 0px;
+  margin-right: 0px;
+  padding-left: 10px;
+  padding-right: 10px;
 }
 
 #custom-weather {
@@ -331,3 +351,14 @@ window#waybar.empty #custom-window,
 #custom-window.win-org-kde-polkit-kde-authentication-agent-1, #custom-window.icon-dialog-password { background-image: -gtk-icontheme("dialog-password"); }
 #custom-window.win-geoclue-demo-agent, #custom-window.win-geoclue-where-am-i, #custom-window.icon-mark-location-symbolic { background-image: -gtk-icontheme("mark-location-symbolic"); }
 
+#custom-window.icon-ai-storyteller-photocraft, #custom-window.win-ai-storyteller-photocraft { background-image: -gtk-icontheme("ai.storyteller.photocraft"); }
+#custom-window.icon-swayimg, #custom-window.win-swayimg { background-image: -gtk-icontheme("swayimg"); }
+#custom-window.icon-ai-storyteller-filmcraft, #custom-window.win-ai-storyteller-filmcraft { background-image: -gtk-icontheme("ai.storyteller.filmcraft"); }
+#custom-window.icon-zenity, #custom-window.win-zenity { background-image: -gtk-icontheme("zenity"); }
+#custom-window.icon-epicgameslauncher, #custom-window.win-epicgameslauncher { background-image: -gtk-icontheme("EpicGamesLauncher"); }
+#custom-window.icon-io-github-ilya_zlobintsev-lact, #custom-window.win-io-github-ilya_zlobintsev-lact { background-image: -gtk-icontheme("io.github.ilya_zlobintsev.LACT"); }
+#custom-window.icon-3f68_t-wolf-0, #custom-window.win-t-wolf-exe { background-image: -gtk-icontheme("3F68_T-Wolf.0"); }
+#custom-window.icon-org-gnome-fileroller, #custom-window.win-org-gnome-fileroller { background-image: -gtk-icontheme("org.gnome.FileRoller"); }
+#custom-window.icon-1010_fl64-0, #custom-window.win-fl64-exe { background-image: -gtk-icontheme("1010_FL64.0"); }
+#custom-window.icon-2315_fl-cloud-plugins-0, #custom-window.win-fl-cloud-plugins-exe { background-image: -gtk-icontheme("2315_FL Cloud Plugins.0"); }
+#custom-window.icon-antigravity, #custom-window.win-antigravity { background-image: -gtk-icontheme("antigravity"); }

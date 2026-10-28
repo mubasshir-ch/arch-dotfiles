@@ -16,17 +16,13 @@ get_theme() {
 }
 
 update_theme() {
-    #set the xfce and GTK theme
-    if [[ $VER == "v4" || $VERTO == "v4-" ]]; then
-        xfconf-query -c xsettings -p /Net/IconThemeName -s "Papirus-Dark"
-        gsettings set org.gnome.desktop.interface icon-theme "Papirus-Dark"
-    else 
-        xfconf-query -c xsettings -p /Net/IconThemeName -s "Adwaita$SWITCHTO"
-        gsettings set org.gnome.desktop.interface icon-theme "Adwaita$SWITCHTO"
-    fi
-
-    xfconf-query -c xsettings -p /Net/ThemeName -s "Adwaita$SWITCHTO"
-    gsettings set org.gnome.desktop.interface gtk-theme "Adwaita$SWITCHTO"
+    #set the xfce and GTK theme to Catppuccin and Papirus-Dark
+    xfconf-query -c xsettings -p /Net/IconThemeName -s "Papirus-Dark" 2>/dev/null || true
+    xfconf-query -c xsettings -p /Net/ThemeName -s "catppuccin-mocha-lavender-standard+default" 2>/dev/null || true
+    gsettings set org.gnome.desktop.interface icon-theme "Papirus-Dark" 2>/dev/null || true
+    gsettings set org.gnome.desktop.interface gtk-theme "catppuccin-mocha-lavender-standard+default" 2>/dev/null || true
+    gsettings set org.gnome.desktop.interface cursor-theme "catppuccin-mocha-dark-cursors" 2>/dev/null || true
+    gsettings set org.gnome.desktop.interface cursor-size 24 2>/dev/null || true
 }
 
 get_ver() {

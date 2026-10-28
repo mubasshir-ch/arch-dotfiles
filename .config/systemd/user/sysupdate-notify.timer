@@ -1,0 +1,14 @@
+[Unit]
+Description=Daily Arch Linux System Update Notifier Timer
+Documentation=https://github.com/mub/dotfiles
+
+[Timer]
+# Fires daily at 12:00 PM
+OnCalendar=*-*-* 12:00:00
+# Run immediately if system was powered off when the scheduled timer triggered
+Persistent=true
+# 5m random delay to prevent network spikes
+RandomizedDelaySec=5m
+
+[Install]
+WantedBy=timers.target

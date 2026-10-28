@@ -1,0 +1,123 @@
+#!/usr/bin/env python3
+"""
+bt-dualboot-sync: Extract Bluetooth LinkKeys from a mounted Windows SYSTEM
+registry hive and optionally sync them into Linux BlueZ (/var/lib/bluetooth).
+
+Usage:
+  bt-dualboot-sync /path/to/Windows/System32/config/SYSTEM [--apply]
+"""
+import argparse
+import configparser
+import glob
+import os
+import struct
+import subprocess
+import sys
+
+
+def extract_keys_from_hive(hive_path: str) -> dict[str, dict[str, str]]:
+    with open(hive_path, "rb") as f:
+        data = f.read()
+
+    # Locate the Keys NK cell name in BTHPORT\Parameters\Keys
+    results: dict[str, dict[str, str]] = {}
+    pos = 0
+    while True:
+        idx = data.find(b"nk", pos)
+        if idx == -1:
+            break
+        pos = idx + 2
+        if idx + 76 > len(data):
+            continue
+        name_len = struct.unpack_from("<H", data, idx + 72)[0]
+        if name_len == 12 and idx + 76 + 12 <= len(data):
+            name_bytes = data[idx + 76 : idx + 76 + 12]
+            try:
+                name_str = name_bytes.decode("ascii")
+            except UnicodeDecodeError:
+                continue
+            if all(c in "0123456789abcdefABCDEF" for c in name_str):
+                num_vals = struct.unpack_from("<I", data, idx + 36)[0]
+                val_list_off = struct.unpack_from("<I", data, idx + 40)[0]
+                if 0 < num_vals < 32 and val_list_off != 0xFFFFFFFF:
+                    vlist_abs = 0x1000 + val_list_off + 4
+                    if vlist_abs + num_vals * 4 <= len(data):
+                        adapter_mac = ":".join(
+                            name_str[i : i + 2].upper() for i in range(0, 12, 2)
+                        )
+                        for v_i in range(num_vals):
+                            v_off = struct.unpack_from("<I", data, vlist_abs + v_i * 4)[0]
+                            vk_abs = 0x1000 + v_off + 4
+                            if data[vk_abs : vk_abs + 2] != b"vk":
+                                continue
+                            vname_len = struct.unpack_from("<H", data, vk_abs + 2)[0]
+                            dlen = struct.unpack_from("<I", data, vk_abs + 4)[0]
+                            doff = struct.unpack_from("<I", data, vk_abs + 8)[0]
+                            vtype = struct.unpack_from("<I", data, vk_abs + 12)[0]
+                            if vname_len == 12 and dlen == 16 and vtype == 3:
+                                dev_str = data[vk_abs + 20 : vk_abs + 32].decode(
+                                    "ascii", errors="ignore"
+                                )
+                                if all(c in "0123456789abcdefABCDEF" for c in dev_str):
+                                    dev_mac = ":".join(
+                                        dev_str[i : i + 2].upper()
+                                        for i in range(0, 12, 2)
+                                    )
+                                    key_abs = 0x1000 + doff + 4
+                                    key_hex = data[key_abs : key_abs + 16].hex().upper()
+                                    results.setdefault(adapter_mac, {})[dev_mac] = key_hex
+    return results
+
+
+def sync_to_bluez(keys: dict[str, dict[str, str]], apply: bool = False) -> None:
+    for adapter_mac, devices in keys.items():
+        for dev_mac, win_key in devices.items():
+            print(f"[Windows Hive] Adapter {adapter_mac} -> Device {dev_mac}")
+            print(f"  LinkKey: {win_key}")
+            if not apply:
+                continue
+            info_path = f"/var/lib/bluetooth/{adapter_mac}/{dev_mac}/info"
+            if not os.path.exists(info_path):
+                print(f"  [SKIP] {info_path} does not exist (pair device in Linux first)")
+                continue
+            cp = configparser.ConfigParser()
+            cp.optionxform = str  # preserve case
+            cp.read(info_path)
+            if "LinkKey" not in cp:
+                cp["LinkKey"] = {}
+            old_key = cp["LinkKey"].get("Key", "<none>")
+            cp["LinkKey"]["Key"] = win_key
+            with open(info_path, "w") as f:
+                cp.write(f, space_around_delimiters=False)
+            print(f"  [UPDATED] {info_path} (was {old_key})")
+    if apply:
+        subprocess.run(["systemctl", "restart", "bluetooth"], check=False)
+        print("Restarted bluetooth.service.")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Sync dual-boot Windows Bluetooth LinkKeys to Linux BlueZ"
+    )
+    parser.add_argument(
+        "hive",
+        help="Path to Windows SYSTEM hive (e.g. /mnt/win/Windows/System32/config/SYSTEM)",
+    )
+    parser.add_argument(
+        "--apply",
+        action="store_true",
+        help="Write extracted keys into /var/lib/bluetooth/<Adapter>/<Device>/info (requires root)",
+    )
+    args = parser.parse_args()
+    if not os.path.exists(args.hive):
+        print(f"Error: Hive file not found: {args.hive}", file=sys.stderr)
+        sys.exit(1)
+    keys = extract_keys_from_hive(args.hive)
+    if not keys:
+        print("No Bluetooth LinkKeys found in the specified registry hive.")
+        sys.exit(1)
+    sync_to_bluez(keys, apply=args.apply)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,26 @@
+[Unit]
+Description=llama-server running Qwen3.5-9B Q5_K_M (32K Context)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/llama-server \
+  -m %h/.local/share/models/qwen3.5-9b/Qwen3.5-9B-Q5_K_M.gguf \
+  --alias qwen3.5-9b \
+  --host 127.0.0.1 \
+  --port 8080 \
+  -ngl 99 \
+  -fa on \
+  -c 32768 \
+  -np 1 \
+  -ub 512 \
+  --jinja \
+  --temp 0.6 \
+  --top-p 0.95 \
+  --top-k 20 \
+  --presence-penalty 1.0
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

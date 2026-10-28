@@ -1,0 +1,14 @@
+[Unit]
+Description=OpenRGB Custom Breathing + 60s Color Shift Effect
+After=openrgb-server.service
+Requires=openrgb-server.service
+
+[Service]
+Type=simple
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 -u /home/mub/dotfiles/openrgb/openrgb_breathing_colorshift.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=default.target

@@ -140,18 +140,29 @@ def validate_syntax(conf_path: Path) -> tuple[bool, list[str]]:
     return (len(errors) == 0, errors)
 
 def get_current_profile() -> str:
+    profile = "balanced"
     if CURRENT_FILE.exists():
         val = CURRENT_FILE.read_text().strip()
         if val in PROFILES_ORDER:
-            return val
-    if ACTIVE_CONF.is_symlink():
+            profile = val
+    elif ACTIVE_CONF.is_symlink():
         try:
             target = ACTIVE_CONF.resolve().stem
             if target in PROFILES_ORDER:
-                return target
+                profile = target
         except OSError:
             pass
-    return "performance"
+    if not ACTIVE_CONF.exists():
+        target_conf = PROFILES_DIR / f"{profile}.conf"
+        if target_conf.exists():
+            try:
+                if ACTIVE_CONF.is_symlink():
+                    ACTIVE_CONF.unlink()
+                ACTIVE_CONF.symlink_to(target_conf)
+                CURRENT_FILE.write_text(profile + "\n")
+            except OSError:
+                pass
+    return profile
 
 def set_profile(profile_name: str, skip_restart: bool = False) -> bool:
     if profile_name not in PROFILES_ORDER:

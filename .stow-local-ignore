@@ -1,5 +1,7 @@
 # Files and directories ignored by GNU Stow
 ^usr
+^etc
+^openrgb
 ^\.git
 ^\.gitmodules
 ^\.gitignore

@@ -179,12 +179,15 @@ def resolve_icon(app_class, initial_class):
 
     return None
 
+def sanitize_css_class(val):
+    return (val or "").replace(".", "-").replace(" ", "-").lower()
+
 def auto_register_rule_if_needed(icon_name, app_class, initial_class):
     if not icon_name:
         return
-    clean_icon = icon_name.replace(".", "-").lower()
-    clean_class = (app_class or "").replace(".", "-").lower()
-    clean_init = (initial_class or "").replace(".", "-").lower()
+    clean_icon = sanitize_css_class(icon_name)
+    clean_class = sanitize_css_class(app_class)
+    clean_init = sanitize_css_class(initial_class)
 
     try:
         if not os.path.exists(STYLE_CSS_FILE):
@@ -356,11 +359,11 @@ def render():
 
     cls_parts = [mode]
     if app_class:
-        cls_parts.append(f"win-{app_class.replace('.', '-').lower()}")
+        cls_parts.append(f"win-{sanitize_css_class(app_class)}")
     if initial_class and initial_class != app_class:
-        cls_parts.append(f"win-{initial_class.replace('.', '-').lower()}")
+        cls_parts.append(f"win-{sanitize_css_class(initial_class)}")
     if icon_name:
-        cls_parts.append(f"icon-{icon_name.replace('.', '-').lower()}")
+        cls_parts.append(f"icon-{sanitize_css_class(icon_name)}")
 
     output = {
         "text": bar_text,

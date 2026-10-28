@@ -1,0 +1,250 @@
+#!/usr/bin/env python3
+"""
+Arch Linux System Update Notifier
+Checks for official (checkupdates) and AUR (yay -Qua) updates, categorizes packages,
+and sends a formatted notification to SwayNotificationCenter (SwayNC).
+Features:
+- 24-hour gap check (stored in ~/.local/state/sysupdate/last_check)
+- --startup flag bypasses 24h gap check and waits for network connection
+- --force flag forces immediate check and notification
+- Zero root privileges required for checking
+"""
+
+import argparse
+import html
+import json
+import os
+import re
+import socket
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+STATE_DIR = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local" / "state")) / "sysupdate"
+LAST_CHECK_FILE = STATE_DIR / "last_check"
+CACHE_FILE = STATE_DIR / "state.json"
+DEFAULT_INTERVAL_SECONDS = 82800  # 23 hours (tolerates daily timer jitter)
+
+CATEGORIES = [
+    (
+        "browsers",
+        "Browsers",
+        "🌐",
+        re.compile(r"^(zen(-browser)?|firefox|chromium|google-chrome|brave(-browser|-bin)?|librewolf|vivaldi|tor-browser|opera|epiphany|waterfox|floorp|qutebrowser|microsoft-edge)([-_].*)?$", re.IGNORECASE),
+    ),
+    (
+        "chat",
+        "Chat & Social",
+        "💬",
+        re.compile(r"^(telegram(-desktop)?|discord|vesktop|webcord|slack(-desktop)?|element(-desktop|-web)?|signal-desktop|thunderbird|zoom|teams(-for-linux)?|mattermost(-desktop)?|session-desktop|whatsapp-for-linux|skypeforlinux|revolt-desktop|fluffychat|cinny|weechat)([-_].*)?$", re.IGNORECASE),
+    ),
+    (
+        "drivers_graphics",
+        "Drivers & Graphics",
+        "🎮",
+        re.compile(r"^(nvidia|cuda|mesa|vulkan|amdgpu|xf86-video-.*|intel-media|intel-compute|intel-gpu-tools|libva|libvdpau|libdrm|libglvnd|opencl|directx-headers)([-_].*)?$", re.IGNORECASE),
+    ),
+    (
+        "core_system",
+        "Core & System",
+        "⚙️",
+        re.compile(r"^(linux|linux-headers|linux-lts|linux-zen|linux-hardened|linux-firmware|mkinitcpio|grub|systemd-boot|efibootmgr|systemd|glibc|udev|pacman|yay|paru|archlinux-keyring|base|base-devel|util-linux|coreutils|shadow|pam|sudo|dbus|polkit|openssl|ca-certificates|wayland|hyprland|xdg-desktop-portal|pipewire|wireplumber|sddm|networkmanager|bluez|seatd|elogind)([-_].*)?$", re.IGNORECASE),
+    ),
+    (
+        "cli_dev",
+        "CLI & Dev Tools",
+        "🛠️",
+        re.compile(r"^(git|neovim|nvim|vim|emacs|helix|code|vscodium|kitty|alacritty|foot|wezterm|yazi|btop|htop|bottom|ripgrep|python[0-9]*|python-.*|go|rust|rustc|cargo|nodejs|npm|pnpm|yarn|deno|bun|tmux|zellij|zsh|bash|fish|nushell|starship|gcc|clang|llvm|cmake|make|ninja|meson|gdb|lldb|valgrind|docker|podman|kubectl|helm|terraform|ansible|fzf|bat|eza|fd|jq|yq|zoxide|lazygit|tree-sitter|curl|wget|gh|direnv|lua|luajit|ruby|perl|php|jdk.*|jre.*|openjdk.*)([-_].*)?$", re.IGNORECASE),
+    ),
+]
+
+
+def is_network_available(host="1.1.1.1", port=53, timeout=2) -> bool:
+    """Check connectivity via low-latency DNS socket."""
+    try:
+        with socket.create_connection((host, port), timeout=timeout):
+            return True
+    except OSError:
+        return False
+
+
+def wait_for_network(max_wait=30, step=2) -> bool:
+    """Poll network availability for startup scenarios."""
+    start = time.time()
+    while time.time() - start < max_wait:
+        if is_network_available():
+            return True
+        time.sleep(step)
+    return False
+
+
+def should_check_updates(force=False, startup=False, interval=DEFAULT_INTERVAL_SECONDS) -> bool:
+    """Determine whether the update check should proceed based on time gap."""
+    if force or startup:
+        return True
+    if not LAST_CHECK_FILE.exists():
+        return True
+    try:
+        last_check = float(LAST_CHECK_FILE.read_text().strip())
+        elapsed = time.time() - last_check
+        if elapsed < interval:
+            hours_ago = elapsed / 3600
+            print(f"[INFO] Skipping check: last check was {hours_ago:.1f}h ago (threshold: {interval/3600:.1f}h).")
+            return False
+    except (ValueError, OSError):
+        return True
+    return True
+
+
+def fetch_updates() -> tuple[list[str], list[str]]:
+    """Retrieve pending official and AUR updates without root privileges."""
+    official_pkgs = []
+    aur_pkgs = []
+
+    # 1. Official updates via checkupdates
+    try:
+        res = subprocess.run(["checkupdates"], capture_output=True, text=True, check=False)
+        if res.returncode == 0:
+            for line in res.stdout.strip().splitlines():
+                if line.strip():
+                    official_pkgs.append(line.split()[0])
+    except FileNotFoundError:
+        print("[WARN] checkupdates not found. Is pacman-contrib installed?", file=sys.stderr)
+
+    # 2. AUR updates via yay -Qua
+    try:
+        res_aur = subprocess.run(["yay", "-Qua"], capture_output=True, text=True, check=False)
+        if res_aur.returncode == 0:
+            for line in res_aur.stdout.strip().splitlines():
+                if line.strip():
+                    aur_pkgs.append(line.split()[0])
+    except FileNotFoundError:
+        pass
+
+    return official_pkgs, aur_pkgs
+
+
+def categorize_packages(pkgs: list[str]) -> dict[str, list[str]]:
+    """Group packages into the 6 structured categories."""
+    categorized = {cat_id: [] for cat_id, _, _, _ in CATEGORIES}
+    categorized["other"] = []
+
+    for pkg in pkgs:
+        matched = False
+        for cat_id, _, _, pattern in CATEGORIES:
+            if pattern.match(pkg):
+                categorized[cat_id].append(pkg)
+                matched = True
+                break
+        if not matched:
+            categorized["other"].append(pkg)
+
+    return categorized
+
+
+def build_notification_content(official_pkgs: list[str], aur_pkgs: list[str], categorized: dict[str, list[str]]) -> tuple[str, str]:
+    """Construct title and Pango-markup body for SwayNC."""
+    total_count = len(official_pkgs) + len(aur_pkgs)
+    title = f"󰏔 {total_count} Updates Available"
+
+    lines = [f"<b>Official:</b> {len(official_pkgs)}   <b>AUR:</b> {len(aur_pkgs)}\n"]
+
+    for cat_id, cat_name, icon, _ in CATEGORIES:
+        pkgs = categorized.get(cat_id, [])
+        if not pkgs:
+            continue
+        count = len(pkgs)
+        shown = [html.escape(p) for p in pkgs[:3]]
+        sample_str = ", ".join(shown)
+        if count > 3:
+            sample_str += f" (+{count - 3} more)"
+        lines.append(f"<b>{icon} {cat_name} ({count}):</b> {sample_str}")
+
+    other_pkgs = categorized.get("other", [])
+    if other_pkgs:
+        count = len(other_pkgs)
+        shown = [html.escape(p) for p in other_pkgs[:3]]
+        sample_str = ", ".join(shown)
+        if count > 3:
+            sample_str += f" (+{count - 3} more)"
+        lines.append(f"<b>📦 Other ({count}):</b> {sample_str}")
+
+    body = "\n".join(lines)
+    return title, body
+
+
+def send_notification(title: str, body: str):
+    """Dispatch notification to SwayNC using notify-send."""
+    cmd = [
+        "notify-send",
+        "--app-name=System Update Notifier",
+        "--icon=software-update-available",
+        "--urgency=normal",
+        "--expire-time=15000",
+        title,
+        body
+    ]
+
+    try:
+        subprocess.run(cmd, check=False)
+    except FileNotFoundError:
+        print("[ERROR] notify-send not found.", file=sys.stderr)
+
+
+def save_state(official_count: int, aur_count: int):
+    """Write timestamp and metadata state files."""
+    try:
+        STATE_DIR.mkdir(parents=True, exist_ok=True)
+        now = time.time()
+        LAST_CHECK_FILE.write_text(str(int(now)) + "\n")
+
+        state_data = {
+            "timestamp": int(now),
+            "total": official_count + aur_count,
+            "official": official_count,
+            "aur": aur_count,
+        }
+        CACHE_FILE.write_text(json.dumps(state_data, indent=2) + "\n")
+    except OSError as e:
+        print(f"[WARN] Could not write state file: {e}", file=sys.stderr)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Arch Linux Update Notifier")
+    parser.add_argument("--startup", action="store_true", help="Invoked on login/startup (bypasses 24h gap check)")
+    parser.add_argument("--force", "-f", action="store_true", help="Force immediate check and notification")
+    parser.add_argument("--interval", type=int, default=DEFAULT_INTERVAL_SECONDS, help="Gap check interval in seconds")
+    parser.add_argument("--silent", action="store_true", help="Check and save state without sending desktop notification")
+    args = parser.parse_args()
+
+    if not should_check_updates(force=args.force, startup=args.startup, interval=args.interval):
+        return
+
+    if args.startup:
+        print("[INFO] Startup flag detected. Waiting up to 30s for network connection...")
+        if not wait_for_network(max_wait=30):
+            print("[WARN] Network connection unavailable after 30s. Exiting check.")
+            return
+
+    official_pkgs, aur_pkgs = fetch_updates()
+    total_count = len(official_pkgs) + len(aur_pkgs)
+    print(f"[INFO] Updates found: {total_count} ({len(official_pkgs)} Official, {len(aur_pkgs)} AUR)")
+
+    save_state(len(official_pkgs), len(aur_pkgs))
+
+    if total_count == 0:
+        if args.force:
+            send_notification("󰄬 System Up to Date", "No official or AUR package updates pending.")
+        return
+
+    all_pkgs = list(dict.fromkeys(official_pkgs + aur_pkgs))
+    categorized = categorize_packages(all_pkgs)
+    title, body = build_notification_content(official_pkgs, aur_pkgs, categorized)
+
+    if not args.silent:
+        send_notification(title, body)
+
+
+if __name__ == "__main__":
+    main()

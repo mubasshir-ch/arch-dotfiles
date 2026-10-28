@@ -1,0 +1,11 @@
+[Unit]
+Description=T-Wolf AIO sensor display (CPU temp -> 5131:2017)
+After=graphical-session.target
+
+[Service]
+ExecStart=/usr/bin/python3 -u %h/.local/bin/twolf-aio
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=default.target
