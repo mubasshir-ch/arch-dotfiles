@@ -1,0 +1,307 @@
+#!/usr/bin/env python3
+"""
+hypridle-ctl: Profile management daemon controller for hypridle
+Features:
+- Zero-risk static syntax verification (validates configs without invoking hypridle)
+- Profile switching with smooth hypridle restart
+- Realtime Waybar signal dispatch (SIGRTMIN+10)
+- Metadata extraction directly from profile config headers
+"""
+
+import sys
+import os
+import re
+import json
+import time
+import argparse
+import subprocess
+from pathlib import Path
+
+BASE_DIR = Path.home() / ".config" / "hypr" / "hypridle"
+PROFILES_DIR = BASE_DIR / "profiles"
+ACTIVE_CONF = BASE_DIR / "active.conf"
+CURRENT_FILE = BASE_DIR / "current"
+MASTER_CONF = Path.home() / ".config" / "hypr" / "hypridle.conf"
+
+PROFILES_ORDER = ["performance", "server", "balanced", "power-saver"]
+WAYBAR_SIGNAL = 10  # SIGRTMIN+10
+
+VALID_GENERAL_KEYS = {
+    "lock_cmd", "unlock_cmd", "on_lock_cmd", "on_unlock_cmd",
+    "before_sleep_cmd", "after_sleep_cmd", "ignore_dbus_inhibit",
+    "ignore_systemd_inhibit", "ignore_wayland_inhibit", "inhibit_sleep"
+}
+
+VALID_LISTENER_KEYS = {
+    "timeout", "on-timeout", "on-resume", "condition_cmd", "ignore_inhibit"
+}
+
+def parse_metadata(conf_path: Path) -> dict:
+    meta = {
+        "profile": conf_path.stem,
+        "name": conf_path.stem.replace("-", " ").title(),
+        "icon": "󰟺",
+        "description": "Custom hypridle profile",
+        "lock_timeout": "disabled",
+        "dpms_timeout": "disabled",
+        "suspend_timeout": "disabled"
+    }
+    if not conf_path.exists():
+        return meta
+
+    with open(conf_path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line.startswith("#"):
+                if "general {" in line or "listener {" in line:
+                    break
+                continue
+            match = re.match(r"^#\s*([a-zA-Z_]+)\s*:\s*(.+)$", line)
+            if match:
+                k, v = match.group(1).strip(), match.group(2).strip()
+                meta[k] = v
+    return meta
+
+def validate_syntax(conf_path: Path) -> tuple[bool, list[str]]:
+    """Statically verifies hypridle config syntax without running hypridle."""
+    errors = []
+    if not conf_path.exists():
+        return False, [f"File does not exist: {conf_path}"]
+
+    with open(conf_path, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    brace_depth = 0
+    current_block = None
+    has_general = False
+    listener_count = 0
+    block_has_timeout = False
+
+    for idx, raw_line in enumerate(lines, start=1):
+        line = raw_line.strip()
+        if "#" in line:
+            line = line.split("#", 1)[0].strip()
+        if not line:
+            continue
+
+        if line.endswith("{"):
+            block_name = line[:-1].strip()
+            brace_depth += 1
+            if brace_depth > 1:
+                errors.append(f"Line {idx}: Nested blocks are not supported in hypridle.")
+            if block_name == "general":
+                has_general = True
+                current_block = "general"
+            elif block_name == "listener":
+                listener_count += 1
+                current_block = "listener"
+                block_has_timeout = False
+            else:
+                errors.append(f"Line {idx}: Unknown block category '{block_name}'.")
+                current_block = "unknown"
+            continue
+
+        if line == "}":
+            if current_block == "listener" and not block_has_timeout:
+                errors.append(f"Line {idx}: 'listener' block missing mandatory 'timeout' directive.")
+            brace_depth -= 1
+            current_block = None
+            if brace_depth < 0:
+                errors.append(f"Line {idx}: Unexpected closing brace without matching opening brace.")
+            continue
+
+        if "=" in line:
+            parts = line.split("=", 1)
+            key = parts[0].strip()
+            val = parts[1].strip()
+
+            if current_block == "general":
+                if key not in VALID_GENERAL_KEYS:
+                    errors.append(f"Line {idx}: Invalid key '{key}' in 'general' block.")
+            elif current_block == "listener":
+                if key not in VALID_LISTENER_KEYS:
+                    errors.append(f"Line {idx}: Invalid key '{key}' in 'listener' block.")
+                if key == "timeout":
+                    block_has_timeout = True
+                    try:
+                        t = int(val)
+                        if t <= 0:
+                            errors.append(f"Line {idx}: 'timeout' must be a positive integer, got {val}.")
+                    except ValueError:
+                        errors.append(f"Line {idx}: 'timeout' value must be an integer, got '{val}'.")
+            elif current_block is None:
+                errors.append(f"Line {idx}: Directive '{key} = {val}' outside of any block.")
+        else:
+            errors.append(f"Line {idx}: Malformed directive '{line}'. Expected 'key = value'.")
+
+    if brace_depth != 0:
+        errors.append("Unclosed opening brace encountered before end of file.")
+
+    return (len(errors) == 0, errors)
+
+def get_current_profile() -> str:
+    profile = "balanced"
+    if CURRENT_FILE.exists():
+        val = CURRENT_FILE.read_text().strip()
+        if val in PROFILES_ORDER:
+            profile = val
+    elif ACTIVE_CONF.is_symlink():
+        try:
+            target = ACTIVE_CONF.resolve().stem
+            if target in PROFILES_ORDER:
+                profile = target
+        except OSError:
+            pass
+    if not ACTIVE_CONF.exists():
+        target_conf = PROFILES_DIR / f"{profile}.conf"
+        if target_conf.exists():
+            try:
+                if ACTIVE_CONF.is_symlink():
+                    ACTIVE_CONF.unlink()
+                ACTIVE_CONF.symlink_to(target_conf)
+                CURRENT_FILE.write_text(profile + "\n")
+            except OSError:
+                pass
+    return profile
+
+def set_profile(profile_name: str, skip_restart: bool = False) -> bool:
+    if profile_name not in PROFILES_ORDER:
+        print(f"Error: Unknown profile '{profile_name}'. Available: {', '.join(PROFILES_ORDER)}", file=sys.stderr)
+        return False
+
+    target_conf = PROFILES_DIR / f"{profile_name}.conf"
+    is_valid, errors = validate_syntax(target_conf)
+    if not is_valid:
+        print(f"Error: Profile '{profile_name}' failed syntax validation. Aborting switch.", file=sys.stderr)
+        for err in errors:
+            print(f"  - {err}", file=sys.stderr)
+        return False
+
+    BASE_DIR.mkdir(parents=True, exist_ok=True)
+    if ACTIVE_CONF.exists() or ACTIVE_CONF.is_symlink():
+        ACTIVE_CONF.unlink()
+    ACTIVE_CONF.symlink_to(target_conf)
+
+    CURRENT_FILE.write_text(profile_name + "\n")
+
+    if not skip_restart:
+        subprocess.run(["pkill", "-x", "hypridle"], stderr=subprocess.DEVNULL)
+        time.sleep(0.15)
+        subprocess.Popen(
+            ["hypridle"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True
+        )
+
+    subprocess.run(["pkill", f"-SIGRTMIN+{WAYBAR_SIGNAL}", "waybar"], stderr=subprocess.DEVNULL)
+
+    meta = parse_metadata(target_conf)
+    subprocess.run([
+        "notify-send",
+        "-h", "string:x-canonical-private-synchronous:hypridle-notify",
+        "-u", "low",
+        "-i", "preferences-desktop-screensaver",
+        f"Idle Profile: {meta['name']} {meta['icon']}",
+        meta['description']
+    ], stderr=subprocess.DEVNULL)
+
+    return True
+
+def cycle_profile(direction: int = 1):
+    current = get_current_profile()
+    try:
+        idx = PROFILES_ORDER.index(current)
+    except ValueError:
+        idx = 0
+    next_idx = (idx + direction) % len(PROFILES_ORDER)
+    set_profile(PROFILES_ORDER[next_idx])
+
+def status_json():
+    current = get_current_profile()
+    current_conf = PROFILES_DIR / f"{current}.conf"
+    meta = parse_metadata(current_conf)
+
+    tooltip_lines = [
+        "<span size='large' weight='bold' color='#cdd6f4'>󰟺  Hypridle Manager</span>",
+        f"<b>Active Profile:</b> <span weight='bold' color='#a6e3a1'>{meta['name']}</span> {meta['icon']}",
+        f"<span color='#a6adc8'><i>{meta['description']}</i></span>",
+        "",
+        "<span weight='bold' color='#89b4fa'>Timeouts:</span>",
+        f"  󰌾  <b>Lock Session:</b>      {meta['lock_timeout']}",
+        f"  󰍹  <b>Screen Off (DPMS):</b>  {meta['dpms_timeout']}",
+        f"  󰒲  <b>Suspend PC:</b>         {meta['suspend_timeout']}",
+        "",
+        "<span weight='bold' color='#89b4fa'>Available Profiles:</span>"
+    ]
+
+    for p in PROFILES_ORDER:
+        p_meta = parse_metadata(PROFILES_DIR / f"{p}.conf")
+        mark = " <span color='#a6e3a1'><b>✓</b></span>" if p == current else ""
+        tooltip_lines.append(f"  {p_meta['icon']}  {p_meta['name']:<13} <span color='#6c7086'>({p_meta['description']})</span>{mark}")
+
+    tooltip_lines.extend([
+        "",
+        "󰈈  <i>Left-click:</i>  Next profile",
+        "󰍽  <i>Right-click:</i> Previous profile"
+    ])
+
+    out = {
+        "text": meta["icon"],
+        "alt": current,
+        "tooltip": "\n".join(tooltip_lines),
+        "class": current
+    }
+    print(json.dumps(out))
+
+def check_all():
+    all_ok = True
+    print("Static Syntax Check (Hypridle Profiles):")
+    for p in PROFILES_ORDER:
+        conf = PROFILES_DIR / f"{p}.conf"
+        ok, errs = validate_syntax(conf)
+        if ok:
+            meta = parse_metadata(conf)
+            print(f"  [PASS] {p:<13} ({meta['icon']} {meta['name']})")
+        else:
+            all_ok = False
+            print(f"  [FAIL] {p:<13}")
+            for e in errs:
+                print(f"         └── {e}")
+    if not all_ok:
+        sys.exit(1)
+
+def main():
+    parser = argparse.ArgumentParser(description="Hypridle Profile Controller")
+    subparsers = parser.add_subparsers(dest="command")
+
+    subparsers.add_parser("status", help="Output JSON for Waybar")
+    subparsers.add_parser("next", help="Cycle to next profile")
+    subparsers.add_parser("prev", help="Cycle to previous profile")
+    subparsers.add_parser("check", help="Statically validate profile syntax")
+    subparsers.add_parser("get", help="Print active profile name")
+
+    set_p = subparsers.add_parser("set", help="Set active profile")
+    set_p.add_argument("profile", choices=PROFILES_ORDER, help="Profile name")
+    set_p.add_argument("--no-restart", action="store_true", help="Do not restart hypridle daemon")
+
+    args = parser.parse_args()
+
+    if args.command == "status":
+        status_json()
+    elif args.command == "next":
+        cycle_profile(1)
+    elif args.command == "prev":
+        cycle_profile(-1)
+    elif args.command == "set":
+        if not set_profile(args.profile, skip_restart=args.no_restart):
+            sys.exit(1)
+    elif args.command == "get":
+        print(get_current_profile())
+    elif args.command == "check":
+        check_all()
+    else:
+        parser.print_help()
+
+if __name__ == "__main__":
+    main()

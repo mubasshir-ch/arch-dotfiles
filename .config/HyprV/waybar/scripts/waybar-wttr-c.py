@@ -1,119 +1,199 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import json
 import requests
-from datetime import datetime
+import urllib.parse
+from datetime import datetime, date, timedelta
 
-WEATHER_CODES = {
-    '113': '☀️ ',
-    '116': '⛅ ',
-    '119': '☁️ ',
-    '122': '☁️ ',
-    '143': '☁️ ',
-    '176': '🌧️',
-    '179': '🌧️',
-    '182': '🌧️',
-    '185': '🌧️',
-    '200': '⛈️ ',
-    '227': '🌨️',
-    '230': '🌨️',
-    '248': '☁️ ',
-    '260': '☁️ ',
-    '263': '🌧️',
-    '266': '🌧️',
-    '281': '🌧️',
-    '284': '🌧️',
-    '293': '🌧️',
-    '296': '🌧️',
-    '299': '🌧️',
-    '302': '🌧️',
-    '305': '🌧️',
-    '308': '🌧️',
-    '311': '🌧️',
-    '314': '🌧️',
-    '317': '🌧️',
-    '320': '🌨️',
-    '323': '🌨️',
-    '326': '🌨️',
-    '329': '❄️ ',
-    '332': '❄️ ',
-    '335': '❄️ ',
-    '338': '❄️ ',
-    '350': '🌧️',
-    '353': '🌧️',
-    '356': '🌧️',
-    '359': '🌧️',
-    '362': '🌧️',
-    '365': '🌧️',
-    '368': '🌧️',
-    '371': '❄️',
-    '374': '🌨️',
-    '377': '🌨️',
-    '386': '🌨️',
-    '389': '🌨️',
-    '392': '🌧️',
-    '395': '❄️ '
+# Nerd Font weather icons matching JetBrainsMono Nerd Font
+WEATHER_ICONS = {
+    '113': '󰖙', # Sunny / Clear
+    '116': '󰖕', # Partly cloudy
+    '119': '󰖐', # Cloudy
+    '122': '󰖐', # Overcast
+    '143': '󰖑', # Mist
+    '149': '󰖑', # Smoky haze
+    '176': '󰖖', # Patchy rain
+    '179': '󰖒', # Patchy snow
+    '182': '󰖒', # Patchy sleet
+    '185': '󰖒', # Patchy freezing drizzle
+    '200': '󰙾', # Thundery outbreaks
+    '227': '󰼶', # Blowing snow
+    '230': '󰼶', # Blizzard
+    '248': '󰖑', # Fog
+    '260': '󰖑', # Freezing fog
+    '263': '󰖖', # Patchy light drizzle
+    '266': '󰖖', # Light drizzle
+    '281': '󰖖', # Freezing drizzle
+    '284': '󰖖', # Heavy freezing drizzle
+    '293': '󰖖', # Patchy light rain
+    '296': '󰖖', # Light rain
+    '299': '󰖖', # Moderate rain at times
+    '302': '󰖖', # Moderate rain
+    '305': '󰖒', # Heavy rain at times
+    '308': '󰖒', # Heavy rain
+    '311': '󰖖', # Light freezing rain
+    '314': '󰖒', # Moderate or heavy freezing rain
+    '317': '󰖖', # Light sleet
+    '320': '󰼶', # Moderate or heavy sleet
+    '323': '󰼶', # Patchy light snow
+    '326': '󰼶', # Light snow
+    '329': '󰼶', # Patchy moderate snow
+    '332': '󰼶', # Moderate snow
+    '335': '󰼶', # Patchy heavy snow
+    '338': '󰼶', # Heavy snow
+    '350': '󰖖', # Ice pellets
+    '353': '󰖖', # Light rain shower
+    '356': '󰖒', # Moderate or heavy rain shower
+    '359': '󰖒', # Torrential rain shower
+    '362': '󰖖', # Light sleet showers
+    '365': '󰖒', # Moderate or heavy sleet showers
+    '368': '󰼶', # Light snow showers
+    '371': '󰼶', # Moderate or heavy snow showers
+    '374': '󰖖', # Light showers of ice pellets
+    '377': '󰖒', # Moderate or heavy showers of ice pellets
+    '386': '󰙾', # Patchy light rain with thunder
+    '389': '󰙾', # Moderate or heavy rain with thunder
+    '392': '󰙾', # Patchy light snow with thunder
+    '395': '󰙾', # Moderate or snow with thunder
 }
+
+def get_weather_icon(code):
+    return WEATHER_ICONS.get(str(code), '󰖕')
+
 
 data = {}
 
+try:
+    init_res = requests.get("https://wttr.in/?format=j1", timeout=8).json()
+except Exception:
+    print(json.dumps({"text": "", "tooltip": ""}))
+    exit(0)
 
-weather = requests.get("https://wttr.in/?format=j1").json()
+weather = init_res
+location_str = ""
 
+try:
+    nearest = init_res.get('nearest_area', [{}])[0]
+    country = nearest.get('country', [{}])[0].get('value', '').strip()
+    area_name = nearest.get('areaName', [{}])[0].get('value', '').strip()
+    
+    # Resolve canonical city name
+    city_name = ""
+    lat = nearest.get('latitude')
+    lon = nearest.get('longitude')
+    if lat and lon:
+        try:
+            nom_url = f"https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lon}&format=json&accept-language=en"
+            addr = requests.get(nom_url, headers={"User-Agent": "WaybarWeather/1.0"}, timeout=3).json().get("address", {})
+            city_name = addr.get("city") or addr.get("town") or addr.get("state_district") or addr.get("state")
+        except Exception:
+            pass
 
-def format_time(time):
-    return time.replace("00", "").zfill(2)
+    # Fallback to system timezone city if needed
+    if not city_name:
+        try:
+            import subprocess
+            tz = subprocess.check_output(["timedatectl", "show", "-p", "Timezone", "--value"], text=True).strip()
+            if "/" in tz:
+                city_name = tz.split("/")[-1].replace("_", " ")
+        except Exception:
+            pass
 
+    if not city_name:
+        city_name = area_name
 
-def format_temp(temp):
-    return (hour['FeelsLikeC']+"°").ljust(3)
+    if city_name and country:
+        location_str = f"{city_name}, {country}"
+    else:
+        location_str = city_name or country or "Local"
 
+    today = date.today()
+    today_str = today.isoformat()
+    tomorrow_str = (today + timedelta(days=1)).isoformat()
+    weather_dates = [d.get('date') for d in init_res.get('weather', [])]
 
-def format_chances(hour):
-    chances = {
-        "chanceoffog": "Fog",
-        "chanceoffrost": "Frost",
-        "chanceofovercast": "Overcast",
-        "chanceofrain": "Rain",
-        "chanceofsnow": "Snow",
-        "chanceofsunshine": "Sunshine",
-        "chanceofthunder": "Thunder",
-        "chanceofwindy": "Wind"
-    }
+    # If the default auto-detected response dates lag behind local timezone date,
+    # re-query wttr.in using the city name to align with local day
+    query_city = city_name or area_name
+    if query_city and (not weather_dates or weather_dates[0] != today_str):
+        try:
+            loc_res = requests.get(f"https://wttr.in/{urllib.parse.quote(query_city)}?format=j1", timeout=8).json()
+            if loc_res.get('weather'):
+                weather = loc_res
+        except Exception:
+            pass
 
-    conditions = []
-    for event in chances.keys():
-        if int(hour[event]) > 0:
-            conditions.append(chances[event]+" "+hour[event]+"%")
-    return ", ".join(conditions)
+    curr = weather['current_condition'][0]
+    tempint = int(curr['FeelsLikeC'])
+    extrachar = '+' if 0 < tempint < 10 else ''
 
-tempint = int(weather['current_condition'][0]['FeelsLikeC'])
-extrachar = ''
-if tempint > 0 and tempint < 10:
-    extrachar = '+'
+    icon = get_weather_icon(curr.get('weatherCode', ''))
+    data['text'] = f"{icon} {extrachar}{curr['FeelsLikeC']}°"
 
+    tooltip_lines = []
+    
+    # 1. Location & Current Status Header
+    c_desc = curr['weatherDesc'][0]['value'].strip()
+    if location_str:
+        tooltip_lines.append(f"<span color='#cba6f7'><b>📍 {location_str}</b></span>")
+    tooltip_lines.append(f"<span color='#fab387'><b>{icon}  {c_desc}</b></span>   <b>{curr['temp_C']}°C</b>  (Feels <b>{curr['FeelsLikeC']}°C</b>)")
+    tooltip_lines.append(f"<span color='#89dceb'>󰖝</span> {curr['windspeedKmph']:>2} km/h    <span color='#a6e3a1'>󰖎</span> {curr['humidity']:>2}%    <span color='#f9e2af'>󰖙</span> UV {curr.get('uvIndex', '0')}")
+    tooltip_lines.append("")
 
-data['text'] = ' '+WEATHER_CODES[weather['current_condition'][0]['weatherCode']] + \
-    " "+extrachar+weather['current_condition'][0]['FeelsLikeC']+"°"
+    now_hour = datetime.now().hour
 
-data['tooltip'] = f"<b>{weather['current_condition'][0]['weatherDesc'][0]['value']} {weather['current_condition'][0]['temp_C']}°</b>\n"
-data['tooltip'] += f"Feels like: {weather['current_condition'][0]['FeelsLikeC']}°\n"
-data['tooltip'] += f"Wind: {weather['current_condition'][0]['windspeedKmph']}Km/h\n"
-data['tooltip'] += f"Humidity: {weather['current_condition'][0]['humidity']}%\n"
-for i, day in enumerate(weather['weather']):
-    data['tooltip'] += f"\n<b>"
-    if i == 0:
-        data['tooltip'] += "Today, "
-    if i == 1:
-        data['tooltip'] += "Tomorrow, "
-    data['tooltip'] += f"{day['date']}</b>\n"
-    data['tooltip'] += f"⬆️ {day['maxtempC']}° ⬇️ {day['mintempC']}° "
-    data['tooltip'] += f"🌅 {day['astronomy'][0]['sunrise']} 🌇 {day['astronomy'][0]['sunset']}\n"
-    for hour in day['hourly']:
-        if i == 0:
-            if int(format_time(hour['time'])) < datetime.now().hour-2:
+    # 2. Daily Forecasts in Tabular Layout
+    for day in weather.get('weather', []):
+        day_date_str = day.get('date', '')
+        if day_date_str < today_str:
+            continue
+
+        if day_date_str == today_str:
+            d_title = "Today"
+        elif day_date_str == tomorrow_str:
+            d_title = "Tomorrow"
+        else:
+            # Keep only Today and Tomorrow
+            continue
+
+        # Day summary
+        tooltip_lines.append(f"<span color='#f9e2af'><b>{d_title} · {day_date_str}</b></span>")
+        tooltip_lines.append(f"<span color='#f38ba8'> {day['maxtempC']}°</span>  <span color='#89b4fa'> {day['mintempC']}°</span>    <span color='#fab387'>󰖜</span> {day['astronomy'][0]['sunrise']}   <span color='#f5c2e7'>󰖛</span> {day['astronomy'][0]['sunset']}")
+        
+        # Table column headers
+        tooltip_lines.append("<span color='#6c7086'>Time   Weather        Temp  Feel    󰖗     󰖝       󰖎</span>")
+        tooltip_lines.append("<span color='#313244'>────────────────────────────────────────────────</span>")
+
+        is_today = (day_date_str == today_str)
+        for hour in day.get('hourly', []):
+            raw_t = int(hour['time']) // 100
+            if is_today and raw_t < now_hour - 2:
                 continue
-        data['tooltip'] += f"{format_time(hour['time'])} {WEATHER_CODES[hour['weatherCode']]} {format_temp(hour['FeelsLikeC'])} {hour['weatherDesc'][0]['value']}, {format_chances(hour)}\n"
+            
+            t_str = f"{raw_t:02d}:00"
+            h_icon = get_weather_icon(hour.get('weatherCode', ''))
+            h_desc = hour['weatherDesc'][0]['value'].strip()
+            if len(h_desc) > 12:
+                h_desc = h_desc[:11] + "…"
+            
+            temp = f"{hour['tempC']}°"
+            feel = f"{hour['FeelsLikeC']}°"
+            rain = f"{hour.get('chanceofrain', '0')}%"
+            wind = f"{hour.get('windspeedKmph', '0')}k"
+            hum = f"{hour.get('humidity', '0')}%"
+            
+            row = f"{t_str:<5}  {h_icon} {h_desc:<12} {temp:>4}  {feel:>4}  {rain:>5}  {wind:>4}    {hum:>4}"
+            tooltip_lines.append(row)
+        
+        tooltip_lines.append("")
 
+    # 3. Legend at the bottom
+    tooltip_lines.append("<span color='#6c7086'><b>Legend:</b></span>")
+    tooltip_lines.append("<span color='#a6adc8'> Max    Min   󰖜 Sunrise   󰖛 Sunset</span>")
+    tooltip_lines.append("<span color='#a6adc8'>󰖗 Rain  󰖝 Wind  󰖎 Humidity  UV UV Index</span>")
 
-print(json.dumps(data))
+    data['tooltip'] = f"<span font_family='JetBrainsMono Nerd Font'>\n" + "\n".join(tooltip_lines) + "\n</span>"
+    print(json.dumps(data))
+except Exception:
+    print(json.dumps({"text": "", "tooltip": ""}))

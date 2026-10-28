@@ -14,36 +14,41 @@ window#waybar {
 
 tooltip {
   background: #1e1e2e;
-  border-radius: 10px;
+  border-radius: 12px;
   border-width: 2px;
   border-style: solid;
-  border-color: #11111b;
+  border-color: #313244;
+  padding: 12px 16px;
+}
+
+tooltip label {
+  color: #cdd6f4;
+  font-family: "JetBrainsMono Nerd Font";
+  font-weight: bold;
+  font-size: 16px;
+  padding: 4px;
 }
 
 #workspaces button {
   padding: 5px;
-  color: #313244;
+  color: #6c7086;
   margin-right: 5px;
 }
 
 #workspaces button.active {
-  color: #a6adc8;
+  color: #b4befe;
 }
 
 #workspaces button.focused {
-  color: #a6adc8;
-  background: #eba0ac;
-  border-radius: 10px;
+  color: #b4befe;
 }
 
 #workspaces button.urgent {
-  color: #11111b;
-  background: #a6e3a1;
-  border-radius: 10px;
+  color: #f38ba8;
 }
 
 #workspaces button:hover {
-  background: #11111b;
+  background: transparent;
   color: #cdd6f4;
   border-radius: 10px;
 }
@@ -52,16 +57,22 @@ tooltip {
 #custom-weather,
 #custom-myhyprv,
 #custom-light_dark,
-#window,
+#custom-window,
 #clock,
+#custom-clock,
 #battery,
 #pulseaudio,
 #network,
 #bluetooth,
+#custom-bluetooth,
 #temperature,
+#custom-sysmon,
+#custom-hypridle,
 #workspaces,
 #tray,
-#backlight {
+#backlight,
+#custom-keybinds,
+#custom-notification {
   background: #1e1e2e;
   opacity: 0.8;
   padding: 0px 10px;
@@ -71,26 +82,95 @@ tooltip {
 }
 
 /* close to left */
-#temperature,
-#backlight,
 #custom-myhyprv {
   border-radius: 10px 0px 0px 10px;
 }
 
+#temperature {
+  color: #b4befe;
+  border-radius: 10px;
+  margin-right: 10px;
+}
+
+/* Combined Hardware & Power Pill [ Sysmon (btop) | Hypridle | Charge ] */
+#custom-sysmon {
+  color: #b4befe;
+  border-radius: 10px 0px 0px 10px;
+  border-right: 0px;
+  margin-right: 0px;
+  padding-right: 10px;
+}
+
+#custom-hypridle {
+  color: #b4befe;
+  border-radius: 0px 10px 10px 0px;
+  border-left: 0px;
+  border-right: 1px solid #181825;
+  margin-left: 0px;
+  margin-right: 10px;
+  padding-left: 10px;
+  padding-right: 14px;
+  font-size: 15px;
+}
+
+
+
+#custom-hypridle.performance {
+  color: #fab387; /* Catppuccin Mocha Peach (Awake) */
+}
+
+#custom-hypridle.server {
+  color: #89b4fa; /* Catppuccin Mocha Blue (Server) */
+}
+
+#custom-hypridle.balanced {
+  color: #a6e3a1; /* Catppuccin Mocha Green (Balanced) */
+}
+
+#custom-hypridle.power-saver {
+  color: #f9e2af; /* Catppuccin Mocha Yellow (Power Saver) */
+}
+
 /*close to the right */
-#bluetooth,
 #custom-light_dark {
   border-radius: 0px 10px 10px 0px;
   margin-right: 10px;
 }
 
-#temperature.critical {
+#temperature.critical,
+#custom-sysmon.critical {
   color: #eba0ac;
+}
+
+#custom-sysmon.warning {
+  color: #fab387;
 }
 
 #tray {
   border-radius: 10px;
   margin-right: 10px;
+}
+
+#custom-keybinds {
+  color: #b4befe;
+  border-radius: 10px 0px 0px 10px;
+  border-right: 0px;
+  padding: 0px 8px;
+}
+
+#custom-notification,
+#custom-notification.notification,
+#custom-notification.dnd-notification,
+#custom-notification.dnd-none,
+#custom-notification.inhibited-notification,
+#custom-notification.inhibited-none,
+#custom-notification.dnd-inhibited-notification,
+#custom-notification.dnd-inhibited-none {
+  color: #b4befe;
+  border-radius: 0px 10px 10px 0px;
+  border-left: 0px;
+  margin-right: 10px;
+  padding: 0px 8px;
 }
 
 #workspaces {
@@ -101,53 +181,77 @@ tooltip {
 }
 
 #custom-power_profile {
-  color: #a6e3a1;
+  color: #b4befe;
   border-left: 0px;
   border-right: 0px;
 }
 
-#window {
+#custom-window {
   border-radius: 10px;
   margin-left: 60px;
   margin-right: 60px;
-  padding: 0 10px;
+  color: #cdd6f4;
+  background-repeat: no-repeat;
+  background-size: 16px 16px;
 }
 
-window#waybar.empty #window {
-    background-color: transparent;
-    border: none;
-    min-width: 0;
-    padding: 0;
+#custom-window.compact {
+  padding: 0;
+  min-width: 36px;
+  background-position: center center;
 }
 
-#clock {
-  color: #fab387;
+#custom-window.full {
+  padding: 0 12px 0 30px;
+  background-position: 8px center;
+}
+
+
+window#waybar.empty #custom-window,
+#custom-window.empty {
+  background-color: transparent;
+  background-image: none;
+  border: none;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+}
+
+#clock,
+#custom-clock {
+  color: #b4befe;
   border-radius: 10px 0px 0px 10px;
   margin-left: 10px;
   border-right: 0px;
 }
 
 #network {
-  color: #f9e2af;
+  color: #b4befe;
   border-radius: 10px 0px 0px 10px;
-  border-left: 0px;
   border-right: 0px;
 }
 
-#bluetooth {
-  color: #89b4fa;
+#bluetooth,
+#custom-bluetooth {
+  color: #b4befe;
   border-radius: 0px 10px 10px 0px;
   margin-right: 10px;
 }
 
+#backlight {
+  color: #b4befe;
+  border-radius: 10px;
+  margin-right: 10px;
+}
+
 #pulseaudio {
-  color: #89b4fa;
-  border-left: 0px;
+  color: #b4befe;
+  border-radius: 10px 0px 0px 10px;
   border-right: 0px;
 }
 
 #pulseaudio.microphone {
-  color: #cba6f7;
+  color: #b4befe;
   border-left: 0px;
   border-right: 0px;
   border-radius: 0px 10px 10px 0px;
@@ -155,14 +259,106 @@ window#waybar.empty #window {
 }
 
 #battery {
-  color: #a6e3a1;
-  border-radius: 0 10px 10px 0;
-  margin-right: 10px;
+  color: #b4befe;
+  border-radius: 0px;
   border-left: 0px;
+  border-right: 0px;
+  margin-left: 0px;
+  margin-right: 0px;
+  padding-left: 10px;
+  padding-right: 10px;
 }
 
 #custom-weather {
+  color: #b4befe;
   border-radius: 0px 10px 10px 0px;
-  border-right: 0px;
+  border-left: 0px;
   margin-left: 0px;
 }
+
+/* Application icons for Waybar custom/window */
+#custom-window {
+  background-repeat: no-repeat;
+  background-size: 16px 16px;
+}
+
+/* Default application icon fallback */
+#custom-window {
+  background-image: -gtk-icontheme("application-x-executable");
+}
+
+/* Browsers */
+#custom-window.win-zen, #custom-window.win-zen-browser, #custom-window.icon-zen-browser { background-image: -gtk-icontheme("zen-browser"); }
+#custom-window.win-chromium, #custom-window.win-chromium-browser, #custom-window.icon-chromium { background-image: -gtk-icontheme("chromium"); }
+#custom-window.win-firefox, #custom-window.win-firefox-esr, #custom-window.icon-firefox { background-image: -gtk-icontheme("web-browser"); }
+#custom-window.win-google-chrome, #custom-window.win-google-chrome-stable, #custom-window.icon-google-chrome { background-image: -gtk-icontheme("web-browser"); }
+#custom-window.win-brave-browser, #custom-window.icon-brave-browser { background-image: -gtk-icontheme("web-browser"); }
+
+/* Terminals */
+#custom-window.win-kitty, #custom-window.win-kitty-open, #custom-window.icon-kitty { background-image: -gtk-icontheme("kitty"); }
+#custom-window.win-alacritty, #custom-window.icon-alacritty { background-image: -gtk-icontheme("utilities-terminal"); }
+#custom-window.win-foot, #custom-window.win-footclient, #custom-window.icon-foot { background-image: -gtk-icontheme("utilities-terminal"); }
+#custom-window.win-wezterm, #custom-window.win-org-wezfurlong-wezterm, #custom-window.icon-wezterm { background-image: -gtk-icontheme("utilities-terminal"); }
+
+/* Development & Editors */
+#custom-window.win-nvim, #custom-window.win-neovim, #custom-window.icon-nvim { background-image: -gtk-icontheme("nvim"); }
+#custom-window.win-code, #custom-window.win-code-oss, #custom-window.win-vscodium, #custom-window.icon-code { background-image: -gtk-icontheme("accessories-text-editor"); }
+#custom-window.win-gedit, #custom-window.win-org-gnome-gedit, #custom-window.icon-org-gnome-gedit { background-image: -gtk-icontheme("org.gnome.gedit"); }
+
+/* File Managers */
+#custom-window.win-thunar, #custom-window.win-thunar-bulk-rename, #custom-window.win-thunar-settings, #custom-window.icon-org-xfce-thunar { background-image: -gtk-icontheme("org.xfce.thunar"); }
+#custom-window.win-yazi, #custom-window.icon-yazi { background-image: -gtk-icontheme("yazi"); }
+#custom-window.win-dolphin, #custom-window.icon-dolphin { background-image: -gtk-icontheme("system-file-manager"); }
+#custom-window.win-nautilus, #custom-window.win-org-gnome-nautilus, #custom-window.icon-org-gnome-nautilus { background-image: -gtk-icontheme("system-file-manager"); }
+
+/* Communication */
+#custom-window.win-telegram, #custom-window.win-telegramdesktop, #custom-window.win-org-telegram-desktop, #custom-window.icon-org-telegram-desktop { background-image: -gtk-icontheme("org.telegram.desktop"); }
+#custom-window.win-discord, #custom-window.win-vesktop, #custom-window.win-webcord, #custom-window.icon-discord { background-image: -gtk-icontheme("discord"); }
+
+/* Media, Graphics & Tools */
+#custom-window.win-obs, #custom-window.win-obs-studio, #custom-window.win-com-obsproject-studio, #custom-window.icon-com-obsproject-studio { background-image: -gtk-icontheme("com.obsproject.Studio"); }
+#custom-window.win-gimp, #custom-window.icon-gimp { background-image: -gtk-icontheme("gimp"); }
+#custom-window.win-blender, #custom-window.icon-blender { background-image: -gtk-icontheme("blender"); }
+#custom-window.win-audacity, #custom-window.icon-audacity { background-image: -gtk-icontheme("audacity"); }
+#custom-window.win-vlc, #custom-window.win-vlc-openbd, #custom-window.win-vlc-opencda, #custom-window.win-vlc-opendvd, #custom-window.win-vlc-openvcd, #custom-window.icon-vlc { background-image: -gtk-icontheme("vlc"); }
+#custom-window.win-obsidian, #custom-window.win-md-obsidian-obsidian, #custom-window.icon-obsidian { background-image: -gtk-icontheme("obsidian"); }
+#custom-window.win-openrgb, #custom-window.win-org-openrgb-openrgb, #custom-window.icon-org-openrgb-openrgb { background-image: -gtk-icontheme("org.openrgb.OpenRGB"); }
+#custom-window.win-goverlay, #custom-window.win-io-github-benjamimgois-goverlay, #custom-window.icon-io-github-benjamimgois-goverlay { background-image: -gtk-icontheme("io.github.benjamimgois.goverlay"); }
+#custom-window.win-qbittorrent, #custom-window.win-org-qbittorrent-qbittorrent, #custom-window.icon-qbittorrent { background-image: -gtk-icontheme("qbittorrent"); }
+#custom-window.win-zathura, #custom-window.win-org-pwmt-zathura, #custom-window.win-org-pwmt-zathura-pdf-mupdf, #custom-window.icon-org-pwmt-zathura { background-image: -gtk-icontheme("org.pwmt.zathura"); }
+#custom-window.win-steam, #custom-window.icon-steam { background-image: -gtk-icontheme("steam"); }
+#custom-window.win-heroic, #custom-window.icon-heroic { background-image: -gtk-icontheme("heroic"); }
+#custom-window.win-btop, #custom-window.icon-btop { background-image: -gtk-icontheme("btop"); }
+#custom-window.win-swappy, #custom-window.icon-swappy { background-image: -gtk-icontheme("swappy"); }
+
+/* System & Utilities */
+#custom-window.win-pavucontrol, #custom-window.win-org-pulseaudio-pavucontrol, #custom-window.icon-org-pulseaudio-pavucontrol { background-image: -gtk-icontheme("org.pulseaudio.pavucontrol"); }
+#custom-window.win-blueman-manager, #custom-window.icon-blueman { background-image: -gtk-icontheme("blueman"); }
+#custom-window.win-blueman-adapters, #custom-window.icon-blueman-device { background-image: -gtk-icontheme("blueman-device"); }
+#custom-window.win-nm-connection-editor, #custom-window.icon-preferences-system-network { background-image: -gtk-icontheme("preferences-system-network"); }
+#custom-window.win-nm-applet, #custom-window.icon-nm-device-wireless { background-image: -gtk-icontheme("nm-device-wireless"); }
+#custom-window.win-qt5ct, #custom-window.win-qt6ct, #custom-window.icon-preferences-desktop-theme { background-image: -gtk-icontheme("preferences-desktop-theme"); }
+#custom-window.win-kvantummanager, #custom-window.icon-kvantum { background-image: -gtk-icontheme("kvantum"); }
+#custom-window.win-qv4l2, #custom-window.icon-qv4l2 { background-image: -gtk-icontheme("qv4l2"); }
+#custom-window.win-qvidcap, #custom-window.icon-qvidcap { background-image: -gtk-icontheme("qvidcap"); }
+#custom-window.win-xfce4-about, #custom-window.icon-org-xfce-about { background-image: -gtk-icontheme("org.xfce.about"); }
+#custom-window.win-xdg-desktop-portal-gtk, #custom-window.icon-applications-system-symbolic { background-image: -gtk-icontheme("applications-system-symbolic"); }
+#custom-window.win-granite-7-demo, #custom-window.win-io-elementary-granite-7-demo, #custom-window.icon-io-elementary-granite-7 { background-image: -gtk-icontheme("io.elementary.granite-7"); }
+#custom-window.win-java-java-openjdk, #custom-window.win-jconsole-java-openjdk, #custom-window.win-jshell-java-openjdk, #custom-window.icon-java27-openjdk { background-image: -gtk-icontheme("java27-openjdk"); }
+#custom-window.win-materialx-grapheditor, #custom-window.win-materialx-view, #custom-window.icon-materialx { background-image: -gtk-icontheme("materialx"); }
+#custom-window.win-openusd, #custom-window.win-org-openusd-usdview, #custom-window.icon-openusd { background-image: -gtk-icontheme("openusd"); }
+#custom-window.win-avahi-discover, #custom-window.win-bssh, #custom-window.win-bvnc, #custom-window.icon-network-wired { background-image: -gtk-icontheme("network-wired"); }
+#custom-window.win-org-kde-polkit-kde-authentication-agent-1, #custom-window.icon-dialog-password { background-image: -gtk-icontheme("dialog-password"); }
+#custom-window.win-geoclue-demo-agent, #custom-window.win-geoclue-where-am-i, #custom-window.icon-mark-location-symbolic { background-image: -gtk-icontheme("mark-location-symbolic"); }
+
+#custom-window.icon-ai-storyteller-photocraft, #custom-window.win-ai-storyteller-photocraft { background-image: -gtk-icontheme("ai.storyteller.photocraft"); }
+#custom-window.icon-swayimg, #custom-window.win-swayimg { background-image: -gtk-icontheme("swayimg"); }
+#custom-window.icon-ai-storyteller-filmcraft, #custom-window.win-ai-storyteller-filmcraft { background-image: -gtk-icontheme("ai.storyteller.filmcraft"); }
+#custom-window.icon-zenity, #custom-window.win-zenity { background-image: -gtk-icontheme("zenity"); }
+#custom-window.icon-epicgameslauncher, #custom-window.win-epicgameslauncher { background-image: -gtk-icontheme("EpicGamesLauncher"); }
+#custom-window.icon-io-github-ilya_zlobintsev-lact, #custom-window.win-io-github-ilya_zlobintsev-lact { background-image: -gtk-icontheme("io.github.ilya_zlobintsev.LACT"); }
+#custom-window.icon-3f68_t-wolf-0, #custom-window.win-t-wolf-exe { background-image: -gtk-icontheme("3F68_T-Wolf.0"); }
+#custom-window.icon-org-gnome-fileroller, #custom-window.win-org-gnome-fileroller { background-image: -gtk-icontheme("org.gnome.FileRoller"); }
+#custom-window.icon-1010_fl64-0, #custom-window.win-fl64-exe { background-image: -gtk-icontheme("1010_FL64.0"); }
+#custom-window.icon-2315_fl-cloud-plugins-0, #custom-window.win-fl-cloud-plugins-exe { background-image: -gtk-icontheme("2315_FL Cloud Plugins.0"); }
+#custom-window.icon-antigravity, #custom-window.win-antigravity { background-image: -gtk-icontheme("antigravity"); }

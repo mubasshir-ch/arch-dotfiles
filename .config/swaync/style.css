@@ -1,0 +1,504 @@
+/* Window and Layer Transparency - Eliminates any black/theme background */
+.background,
+.background:backdrop,
+window,
+window:backdrop,
+window.background,
+blankwindow,
+.blank-window,
+notificationwindow,
+.notification-window,
+.floating-notifications,
+.floating-notifications.background,
+.floating-notifications.background:backdrop {
+  background: transparent;
+  background-color: transparent;
+}
+
+/* Global Font and Transition - JetBrainsMono Nerd Font */
+* {
+  all: unset;
+  font-family: "JetBrainsMono Nerd Font";
+  font-size: 13px;
+  transition: 200ms;
+}
+
+label,
+button,
+entry {
+  font-family: "JetBrainsMono Nerd Font";
+}
+
+/* Sliders / Troughs */
+trough {
+  background-color: #313244;
+  border-radius: 6px;
+}
+
+trough highlight {
+  background: #b4befe;
+  border-radius: 6px;
+}
+
+scale {
+  margin: 0 4px;
+}
+
+scale trough {
+  margin: 0 8px;
+  min-height: 8px;
+  min-width: 70px;
+  border-radius: 6px;
+}
+
+trough slider {
+  margin: -6px;
+  border-radius: 10px;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
+  background-color: #cdd6f4;
+  min-width: 16px;
+  min-height: 16px;
+}
+
+trough slider:hover {
+  background-color: #b4befe;
+}
+
+/* Floating Notifications (Popups) */
+.floating-notifications {
+  background: transparent;
+}
+
+.floating-notifications .notification-background {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+  border: 1px solid #45475a;
+  border-radius: 12px;
+  margin: 10px 14px;
+  background-color: rgba(30, 30, 46, 0.92);
+  color: #cdd6f4;
+  padding: 10px 12px;
+}
+
+.floating-notifications .notification {
+  border-radius: 10px;
+  padding: 4px;
+}
+
+.floating-notifications .notification.critical {
+  border: 1px solid #f38ba8;
+}
+
+/* Notification Content Styling */
+.notification-content {
+  margin: 4px;
+}
+
+.notification-content .image,
+.image {
+  margin: 4px 14px 4px 4px;
+  border-radius: 10px;
+}
+
+.notification-content .app-icon,
+.app-icon {
+  margin: 4px 12px 4px 4px;
+}
+
+.notification-content .text-box {
+  margin-left: 8px;
+}
+
+.notification-content .summary {
+  font-size: 14px;
+  font-weight: bold;
+  color: #cdd6f4;
+  margin-bottom: 3px;
+  margin-right: 32px;
+  letter-spacing: 0.5px;
+}
+
+.notification-content .time {
+  font-size: 11px;
+  color: #a6adc8;
+  margin-right: 32px;
+}
+
+.notification-content .body {
+  font-size: 13px;
+  color: #bac2de;
+  margin-top: 4px;
+  margin-right: 12px;
+}
+
+.close-button,
+.notification-background .close-button {
+  margin-top: 8px;
+  margin-right: 10px;
+  padding: 0;
+  border-radius: 100%;
+  min-width: 18px;
+  min-height: 18px;
+  font-size: 10px;
+  color: #11111b;
+  background-color: #b4befe;
+}
+
+.close-button:hover,
+.notification-background .close-button:hover {
+  background-color: #cdd6f4;
+  color: #11111b;
+}
+
+.notification-group .notification-group-close-button .close-button {
+  margin: 6px 10px;
+  min-width: 18px;
+  min-height: 18px;
+  background-color: #b4befe;
+  color: #11111b;
+  border-radius: 100%;
+}
+
+.notification-group .notification-group-close-button .close-button:hover {
+  background-color: #cdd6f4;
+  color: #11111b;
+}
+
+.notification .notification-action {
+  border-radius: 8px;
+  color: #cdd6f4;
+  background-color: #313244;
+  border: 1px solid #45475a;
+  margin: 4px 3px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.notification .notification-action:hover {
+  background-color: #45475a;
+  color: #f5e0dc;
+}
+
+.notification .notification-action:active {
+  background-color: #585b70;
+}
+
+/* Control Center Container - Catppuccin Mocha Frosted Background */
+.control-center {
+  box-shadow: none;
+  border: 1px solid rgba(69, 71, 90, 0.7);
+  border-radius: 14px;
+  background-color: rgba(30, 30, 46, 0.88);
+  color: #cdd6f4;
+  padding: 16px 12px 16px 16px;
+}
+
+.control-center scrolledwindow,
+.control-center viewport,
+.control-center .control-center-list {
+  background: transparent;
+}
+
+/* Control Center: Empty Notifications Placeholder */
+.control-center-list-placeholder {
+  opacity: 0.85;
+  color: #b4befe;
+}
+
+.control-center-list-placeholder image {
+  color: #b4befe;
+  margin-bottom: 4px;
+}
+
+.control-center-list-placeholder label {
+  color: #b4befe;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+/* Right gutter pushing content away from the scrollbar */
+.control-center .widgets {
+  padding-right: 8px;
+}
+
+.control-center .notification-background {
+  border-radius: 10px;
+  border: 1px solid #45475a;
+  background-color: rgba(24, 24, 37, 0.85);
+  margin: 6px 0;
+  padding: 10px;
+}
+
+.control-center .notification-background .notification {
+  border-radius: 8px;
+}
+
+.control-center .notification-background .notification.low {
+  opacity: 0.8;
+}
+
+/* Control Center: Title Header Widget */
+.control-center .widget-title {
+  margin-bottom: 10px;
+  padding: 0 2px;
+}
+
+.control-center .widget-title > label {
+  color: #cdd6f4;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.control-center .widget-title button {
+  border-radius: 8px;
+  color: #cdd6f4;
+  background-color: rgba(49, 50, 68, 0.85);
+  border: 1px solid #45475a;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.control-center .widget-title button:hover {
+  background-color: #45475a;
+  color: #b4befe;
+  border-color: #b4befe;
+}
+
+.control-center .widget-title button:active {
+  background-color: #585b70;
+}
+
+/* Control Center: Do Not Disturb Widget */
+.widget-dnd {
+  margin: 4px 0 10px 0;
+  padding: 8px 12px;
+  background-color: rgba(49, 50, 68, 0.75);
+  border: 1px solid #45475a;
+  border-radius: 10px;
+}
+
+.widget-dnd label {
+  font-size: 13px;
+  color: #cdd6f4;
+  font-weight: bold;
+}
+
+.widget-dnd switch {
+  border-radius: 12px;
+  background: #45475a;
+  min-width: 36px;
+  min-height: 18px;
+}
+
+switch:checked,
+.widget-dnd switch:checked {
+  background: #b4befe;
+}
+
+.widget-dnd switch slider {
+  background: #cdd6f4;
+  border-radius: 100%;
+  min-width: 14px;
+  min-height: 14px;
+  margin: 2px;
+}
+
+switch:checked slider,
+.widget-dnd switch:checked slider {
+  background: #11111b;
+}
+
+/* Control Center: MPRIS Media Widget with Frosted Overlay & High-Contrast Text */
+.widget-mpris {
+  margin: 4px 0 10px 0;
+  padding: 0;
+}
+
+.widget-mpris-player {
+  background-color: rgba(24, 24, 37, 0.85);
+  border: 1px solid #45475a;
+  border-radius: 12px;
+  padding: 0;
+  overflow: hidden;
+  color: #cdd6f4;
+}
+
+.mpris-overlay {
+  background-color: rgba(17, 17, 27, 0.72);
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.widget-mpris-album-art {
+  border-radius: 10px;
+  margin-right: 12px;
+}
+
+.widget-mpris-title {
+  font-size: 14px;
+  font-weight: bold;
+  color: #ffffff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+.widget-mpris-subtitle {
+  font-size: 12px;
+  color: #bac2de;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.widget-mpris button {
+  border-radius: 8px;
+  color: #cdd6f4;
+  background-color: rgba(69, 71, 90, 0.85);
+  margin: 0 4px;
+  padding: 4px 8px;
+}
+
+.widget-mpris button:hover {
+  background-color: #585b70;
+  color: #b4befe;
+}
+
+.widget-mpris button:active {
+  background-color: #6c7086;
+}
+
+/* Control Center: Media Seek Slider Widget */
+.widget-slider {
+  background-color: rgba(49, 50, 68, 0.75);
+  border: 1px solid #45475a;
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin: 4px 0 6px 0;
+}
+
+.widget-slider label {
+  color: #fab387;
+  font-size: 15px;
+  padding-right: 6px;
+}
+
+.widget-slider highlight,
+.widget-slider trough highlight,
+#seek highlight,
+#seek trough highlight {
+  background: #fab387;
+  background-color: #fab387;
+  border-radius: 6px;
+}
+
+.widget-slider trough slider,
+#seek trough slider {
+  background-color: #cdd6f4;
+}
+
+.widget-slider trough slider:hover,
+#seek trough slider:hover {
+  background-color: #fab387;
+}
+
+/* Control Center: Media Quick Seek Step Buttons */
+.widget-buttons-grid {
+  background-color: rgba(49, 50, 68, 0.75);
+  border: 1px solid #45475a;
+  border-radius: 10px;
+  padding: 6px 8px;
+  margin: 4px 0 10px 0;
+}
+
+.widget-buttons-grid flowboxchild {
+  padding: 2px 4px;
+}
+
+.widget-buttons-grid flowboxchild button {
+  background-color: rgba(69, 71, 90, 0.85);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #cdd6f4;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.widget-buttons-grid flowboxchild button:hover {
+  background-color: #585b70;
+  color: #b4befe;
+  border-color: #b4befe;
+}
+
+.widget-buttons-grid flowboxchild button:active {
+  background-color: #6c7086;
+}
+
+/* Control Center: Volume Slider Widget */
+.widget-volume {
+  background-color: rgba(49, 50, 68, 0.75);
+  border: 1px solid #45475a;
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin: 4px 0 10px 0;
+}
+
+.widget-volume label {
+  color: #b4befe;
+  font-size: 15px;
+  padding-right: 6px;
+}
+
+.widget-volume trough highlight {
+  background: #b4befe;
+}
+
+.widget-volume trough slider:hover {
+  background-color: #b4befe;
+}
+
+/* Control Center: Backlight Slider Widget */
+.widget-backlight {
+  background-color: rgba(49, 50, 68, 0.75);
+  border: 1px solid #45475a;
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin: 4px 0 10px 0;
+}
+
+.widget-backlight label {
+  color: #f9e2af;
+  font-size: 15px;
+  padding-right: 6px;
+}
+
+.widget-backlight trough highlight {
+  background: #f9e2af;
+}
+
+/* Scrollbars - Slim, Subtle Transparency, Pushed to Right */
+scrollbar {
+  background: transparent;
+  background-color: transparent;
+}
+
+scrollbar.vertical {
+  margin-right: 2px;
+  padding-right: 0px;
+}
+
+scrollbar slider {
+  background-color: rgba(205, 214, 244, 0.25);
+  border-radius: 8px;
+  min-width: 3px;
+  min-height: 24px;
+  margin: 0 1px;
+}
+
+scrollbar slider:hover {
+  background-color: rgba(205, 214, 244, 0.55);
+  min-width: 5px;
+}
+
+scrollbar trough {
+  background: transparent;
+  background-color: transparent;
+}

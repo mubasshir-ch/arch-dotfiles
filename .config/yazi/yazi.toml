@@ -1,0 +1,58 @@
+# Yazi Configuration (Catppuccin Mocha & Kitty Wayland Setup)
+
+[manager]
+ratio = [1, 3, 4]
+sort_by = "natural"
+sort_sensitive = false
+sort_reverse = false
+sort_dir_first = true
+linemode = "size"
+show_hidden = false
+show_symlink = true
+scrolloff = 5
+
+[preview]
+wrap = "no"
+tab_size = 2
+max_width = 1200
+max_height = 1200
+image_filter = "triangle"
+image_quality = 85
+sixel_fraction = 12
+ueberzug_scale = 1
+
+[opener]
+edit = [
+	{ run = '${EDITOR:-nvim} "$@"', block = true, desc = "Neovim" },
+]
+open = [
+	{ run = 'xdg-open "$@"', orphan = true, desc = "Open with default application" },
+]
+image = [
+	{ run = 'swappy -f "$1"', orphan = true, desc = "Swappy Image Viewer" },
+	{ run = 'xdg-open "$@"', orphan = true, desc = "System Default" },
+]
+video = [
+	{ run = 'vlc "$@"', orphan = true, desc = "VLC Media Player" },
+]
+pdf = [
+	{ run = 'zathura "$@"', orphan = true, desc = "Zathura PDF Reader" },
+]
+
+[open]
+rules = [
+	{ name = "*/", use = [ "edit", "open" ] },
+	{ mime = "text/*", use = [ "edit", "open" ] },
+	{ mime = "image/*", use = [ "image", "open" ] },
+	{ mime = "video/*", use = [ "video", "open" ] },
+	{ mime = "audio/*", use = [ "video", "open" ] },
+	{ mime = "application/pdf", use = [ "pdf", "open" ] },
+	{ mime = "application/json", use = [ "edit", "open" ] },
+	{ mime = "*/javascript", use = [ "edit", "open" ] },
+	{ mime = "*", use = [ "open", "edit" ] },
+]
+
+[plugin]
+prepend_previewers = [
+	{ name = "*.md", run = "glow" },
+]

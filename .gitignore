@@ -3,3 +3,6 @@
 .config/qBittorrent/qBittorrent-data.conf
 .config/qBittorrent/qBittorrent.conf
 .config/qBittorrent/rss/storage.lock
+.config/hypr/hypridle/active.conf
+.config/hypr/hypridle/current
+.config/hypr/hyprlock-device.conf

@@ -1,0 +1,324 @@
+#!/usr/bin/env python3
+"""
+twolf-aio - Linux replacement for the T-Wolf Windows app's "send sensor data
+to the AIO display" feature.
+
+Reverse engineered from T-Wolf resources/app.asar:
+  main/_baseClass/device_hid.js            (HIDClass.sendPic / startSendData)
+  main/_replace_T_Wolf/util/device_hid.js  (1000 ms interval for 5131:2017)
+
+Target: USB HID 0x5131:0x2017 ("酷灵_2026/03/26" / LovingCool display),
+vendor usage page 0xFF00, no report IDs, 64-byte interrupt OUT reports.
+Because usagePage != 12 and the PID matches none of the special cases, the
+app uses the *generic* 64-byte frame built at device_hid.js lines 885-971.
+
+No third-party dependencies: talks to /dev/hidrawN directly.
+"""
+import argparse
+import datetime
+import glob
+import os
+import shutil
+import signal
+import subprocess
+import sys
+import time
+
+VID, PID = 0x5131, 0x2017
+REPORT_LEN = 64
+
+
+# --------------------------------------------------------------------------
+# Device discovery
+# --------------------------------------------------------------------------
+def find_hidraw(vid=VID, pid=PID):
+    want = f"{vid:08X}:{pid:08X}"
+    for uevent in sorted(glob.glob("/sys/class/hidraw/hidraw*/device/uevent")):
+        with open(uevent) as f:
+            if want in f.read().upper():
+                return "/dev/" + uevent.split("/")[4]
+    return None
+
+
+# --------------------------------------------------------------------------
+# Sensors
+# --------------------------------------------------------------------------
+def _read(path, default=None):
+    try:
+        with open(path) as f:
+            return f.read().strip()
+    except OSError:
+        return default
+
+
+def _hwmon_by_name(*names):
+    for h in glob.glob("/sys/class/hwmon/hwmon*"):
+        if _read(h + "/name") in names:
+            return h
+    return None
+
+
+def _hwmon_temp(hwmon, preferred_labels):
+    """Return temperature (°C) from hwmon, preferring given labels."""
+    if not hwmon:
+        return None
+    temps = {}
+    for inp in glob.glob(hwmon + "/temp*_input"):
+        label = _read(inp.replace("_input", "_label"), os.path.basename(inp))
+        val = _read(inp)
+        if val is not None:
+            temps[label] = int(val) / 1000.0
+    for lbl in preferred_labels:
+        if lbl in temps:
+            return temps[lbl]
+    return next(iter(temps.values()), None)
+
+
+class Sensors:
+    def __init__(self, cpu_sensor=None):
+        # AMD: k10temp (Tctl / Tdie), Intel: coretemp (Package id 0), zenpower
+        self.cpu_hwmon = _hwmon_by_name(cpu_sensor) if cpu_sensor else \
+            _hwmon_by_name("k10temp", "zenpower", "coretemp", "cpu_thermal")
+        self._prev_stat = self._cpu_times()
+        self.has_nvidia = shutil.which("nvidia-smi") is not None
+        self.amdgpu_hwmon = _hwmon_by_name("amdgpu")
+
+    # --- CPU ---
+    def cpu_temp(self):
+        t = _hwmon_temp(self.cpu_hwmon, ["Tdie", "Tctl", "Package id 0"])
+        if t is None:  # fallback: thermal zones
+            z = _read("/sys/class/thermal/thermal_zone0/temp")
+            t = int(z) / 1000.0 if z else 0.0
+        return t
+
+    @staticmethod
+    def _cpu_times():
+        with open("/proc/stat") as f:
+            vals = list(map(int, f.readline().split()[1:]))
+        idle = vals[3] + (vals[4] if len(vals) > 4 else 0)
+        return idle, sum(vals)
+
+    def cpu_util(self):
+        idle, total = self._cpu_times()
+        pidle, ptotal = self._prev_stat
+        self._prev_stat = (idle, total)
+        dt = total - ptotal
+        return 0.0 if dt <= 0 else 100.0 * (1 - (idle - pidle) / dt)
+
+    @staticmethod
+    def cpu_clock_mhz():
+        freqs = []
+        for p in glob.glob("/sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq"):
+            v = _read(p)
+            if v:
+                freqs.append(int(v) / 1000.0)
+        return max(freqs) if freqs else 0.0
+
+    # --- Memory ---
+    @staticmethod
+    def mem():
+        info = {}
+        with open("/proc/meminfo") as f:
+            for line in f:
+                k, v = line.split(":", 1)
+                info[k] = int(v.split()[0])  # kB
+        total = info.get("MemTotal", 0)
+        avail = info.get("MemAvailable", 0)
+        util = 100.0 * (total - avail) / total if total else 0.0
+        return util, total / 1024 / 1024  # %, GiB
+
+    # --- GPU ---
+    def gpu(self):
+        """Return dict temp/util/power/clock (zeros if unavailable)."""
+        out = dict(temp=0.0, util=0.0, power=0.0, clock=0.0)
+        if self.has_nvidia:
+            try:
+                r = subprocess.run(
+                    ["nvidia-smi",
+                     "--query-gpu=temperature.gpu,utilization.gpu,power.draw,clocks.gr",
+                     "--format=csv,noheader,nounits", "-i", "0"],
+                    capture_output=True, text=True, timeout=2)
+                vals = [v.strip() for v in r.stdout.strip().split(",")]
+                for k, v in zip(("temp", "util", "power", "clock"), vals):
+                    try:
+                        out[k] = float(v)
+                    except ValueError:
+                        pass
+            except Exception:
+                pass
+        elif self.amdgpu_hwmon:
+            out["temp"] = _hwmon_temp(self.amdgpu_hwmon, ["edge", "junction"]) or 0.0
+            busy = _read(self.amdgpu_hwmon + "/device/gpu_busy_percent")
+            out["util"] = float(busy) if busy else 0.0
+            pw = _read(self.amdgpu_hwmon + "/power1_average") or \
+                _read(self.amdgpu_hwmon + "/power1_input")
+            out["power"] = int(pw) / 1e6 if pw else 0.0
+        return out
+
+
+# --------------------------------------------------------------------------
+# Packet builder - mirrors device_hid.js generic branch exactly
+# --------------------------------------------------------------------------
+def _i(x, temperature=False, fahrenheit=False):
+    """getIntValue(): clamp, optional C->F, floor."""
+    x = x or 0
+    x = min(x, 999 if temperature else 9999)
+    if temperature and fahrenheit:
+        x = 9 / 5 * x + 32
+    return int(x // 1)
+
+
+def build_frame(s, fahrenheit=False, display_mode=0, cycle_interval=5,
+                cpu_flag=0, dark_flash=1):
+    """s: dict of sensor values. Returns 64-byte list (no report-id prefix)."""
+    unit = 1 if fahrenheit else 0
+    now = datetime.datetime.now()
+
+    cpu_t = s["cpu_temp"]
+    cpu_tz = _i(cpu_t, True, fahrenheit)
+    cpu_tfrac = _i((cpu_t - cpu_tz) * 100)          # JS quirk: frac vs. F-int
+    cpu_u = _i(s["cpu_util"])
+    cpu_p = _i(s["cpu_power"])
+    cpu_clk = _i(s["cpu_clock"])
+    cpu_fan = _i(s["cpu_fan"])
+
+    gpu_t = s["gpu_temp"]
+    gpu_tz = _i(gpu_t, True, fahrenheit)
+    gpu_u = _i(s["gpu_util"])
+    gpu_p = _i(s["gpu_power"])
+    gpu_clk = _i(s["gpu_clock"])
+
+    fan = _i(s["fan"])
+    mem_u = _i(s["mem_util"])
+
+    f = [0] * REPORT_LEN
+    f[0:4] = [1, 0, 1, 2]                       # header
+    f[4] = cpu_tz                               # CPU temp integer
+    f[5] = max(0, cpu_tfrac)                    # CPU temp decimals (x100)
+    f[6] = unit                                 # 0 = °C, 1 = °F
+    f[7] = cpu_u                                # CPU usage %
+    f[8] = cpu_p % 100                          # CPU power (last 2 digits)
+    f[9] = _i((s["cpu_power"] - cpu_p) * 100)   # CPU power decimals
+    f[10] = cpu_clk // 100                      # CPU clock MHz /100
+    f[11] = cpu_clk % 100                       # CPU clock MHz %100
+    f[12] = 0                                   # CPU VID int
+    f[13] = 0                                   # CPU VID decimals
+    f[14] = gpu_tz                              # GPU temp integer
+    f[15] = max(0, _i((gpu_t - gpu_tz) * 100))  # GPU temp decimals
+    f[16] = unit
+    f[17] = gpu_u                               # GPU usage %
+    f[18] = gpu_p % 100                         # GPU power (last 2 digits)
+    f[19] = 0                                   # (always NaN->0 in original)
+    f[20] = gpu_clk // 100
+    f[21] = gpu_clk % 100
+    f[22] = cpu_fan // 100                      # CPU fan RPM /100
+    f[23] = cpu_fan % 100
+    f[24] = fan // 100                          # 2nd fan RPM /100
+    f[25] = fan % 100
+    f[26] = now.year // 100                     # "20"
+    f[27] = now.year % 100                      # "26"
+    f[28] = now.month
+    f[29] = now.day
+    f[30] = now.hour
+    f[31] = now.minute
+    f[32] = now.second
+    f[33] = (now.weekday() + 1) % 7             # 0 = Sunday (JS getDay)
+    f[34] = mem_u                               # RAM usage %
+    f[35] = cpu_p // 100                        # CPU power hundreds
+    f[36] = gpu_p // 100                        # GPU power hundreds
+    f[37] = display_mode                        # 0 temp,1 usage,2 cycle
+    f[38] = cycle_interval                      # cycle seconds
+    f[39] = cpu_flag                            # 0 show CPU, 1 show GPU
+    f[40] = dark_flash
+    f[41] = display_mode
+    f[42] = display_mode
+    f[43] = 0                                   # RAM temp int
+    f[44] = 0                                   # RAM temp decimals
+    f[45] = unit
+    f[46] = 0                                   # RAM clock /100
+    f[47] = 0                                   # RAM clock %100
+    f[48] = display_mode
+    f[49] = _i((s["cpu_util"] - cpu_u) * 100)   # CPU usage decimals
+    f[50] = _i((s["gpu_util"] - gpu_u) * 100)   # GPU usage decimals
+    f[51] = _i((s["mem_util"] - mem_u) * 100)   # RAM usage decimals
+    return [b & 0xFF for b in f]                # Buffer.from() wraps mod 256
+
+
+def to_wire(frame, framing):
+    """
+    framing="raw":  write the 64 bytes as-is (device sees 01 00 01 02 ...).
+    framing="win":  emulate Windows treating byte0 (0x01) as the report ID and
+                    stripping it -> device sees 00 01 02 <temp> ... (64 bytes).
+    hidraw strips a leading 0x00 report ID, so we prepend one in both cases.
+    """
+    if framing == "win":
+        payload = bytes(frame[1:]) + b"\0"
+    else:
+        payload = bytes(frame)
+    return b"\0" + payload
+
+
+# --------------------------------------------------------------------------
+def main():
+    ap = argparse.ArgumentParser(description="Send PC sensor data to T-Wolf AIO (5131:2017)")
+    ap.add_argument("--device", help="hidraw path (auto-detect if omitted)")
+    ap.add_argument("--interval", type=float, default=1.0, help="seconds (app uses 1.0)")
+    ap.add_argument("--fahrenheit", action="store_true")
+    ap.add_argument("--display-mode", type=int, default=0, help="0 temp, 1 usage, 2 cycle")
+    ap.add_argument("--cycle-interval", type=int, default=5)
+    ap.add_argument("--show-gpu", action="store_true", help="cpuFlag=1 (display GPU)")
+    ap.add_argument("--cpu-sensor", help="hwmon name to use for CPU temp (e.g. k10temp)")
+    # Verified on hardware: "win" works, "raw" is ignored by the firmware.
+    ap.add_argument("--framing", choices=["raw", "win"], default="win")
+    ap.add_argument("--test-temp", type=float, help="send a fixed CPU temp (for testing)")
+    ap.add_argument("--once", action="store_true", help="send one frame and exit")
+    ap.add_argument("-v", "--verbose", action="store_true")
+    a = ap.parse_args()
+
+    sens = Sensors(a.cpu_sensor)
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
+    fd = None
+    time.sleep(0.2)  # allow first CPU-util delta
+
+    while True:
+        try:
+            if fd is None:
+                path = a.device or find_hidraw()
+                if not path:
+                    raise OSError("AIO 5131:2017 not found")
+                fd = os.open(path, os.O_RDWR)
+                print(f"connected: {path}", flush=True)
+
+            mem_util, _ = sens.mem()
+            g = sens.gpu()
+            data = dict(
+                cpu_temp=a.test_temp if a.test_temp is not None else sens.cpu_temp(),
+                cpu_util=sens.cpu_util(), cpu_power=0.0, cpu_clock=sens.cpu_clock_mhz(),
+                cpu_fan=0, fan=0, mem_util=mem_util,
+                gpu_temp=g["temp"], gpu_util=g["util"], gpu_power=g["power"],
+                gpu_clock=g["clock"],
+            )
+            frame = build_frame(data, a.fahrenheit, a.display_mode,
+                                a.cycle_interval, 1 if a.show_gpu else 0)
+            os.write(fd, to_wire(frame, a.framing))
+            if a.verbose:
+                print(f"CPU {data['cpu_temp']:.1f}C {data['cpu_util']:.0f}%  "
+                      f"GPU {data['gpu_temp']:.0f}C  -> {bytes(frame[:16]).hex(' ')}",
+                      flush=True)
+            if a.once:
+                return
+        except OSError as e:
+            print(f"error: {e}; retrying", file=sys.stderr, flush=True)
+            if fd is not None:
+                try:
+                    os.close(fd)
+                except OSError:
+                    pass
+                fd = None
+            time.sleep(2)
+            continue
+        time.sleep(a.interval)
+
+
+if __name__ == "__main__":
+    main()
