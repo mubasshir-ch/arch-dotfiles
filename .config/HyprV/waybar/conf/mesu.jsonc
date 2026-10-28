@@ -64,9 +64,9 @@
     "custom/hypridle": {
         "format": "{}",
         "return-type": "json",
-        "exec": "~/.local/bin/hypridle-ctl status",
-        "on-click": "~/.local/bin/hypridle-ctl next",
-        "on-click-right": "~/.local/bin/hypridle-ctl prev",
+        "exec": "~/.config/hypr/hypridle/hypridle-ctl status",
+        "on-click": "~/.config/hypr/hypridle/hypridle-ctl next",
+        "on-click-right": "~/.config/hypr/hypridle/hypridle-ctl prev",
         "interval": 30,
         "signal": 10,
         "tooltip": true
