@@ -362,3 +362,4 @@ window#waybar.empty #custom-window,
 #custom-window.icon-1010_fl64-0, #custom-window.win-fl64-exe { background-image: -gtk-icontheme("1010_FL64.0"); }
 #custom-window.icon-2315_fl-cloud-plugins-0, #custom-window.win-fl-cloud-plugins-exe { background-image: -gtk-icontheme("2315_FL Cloud Plugins.0"); }
 #custom-window.icon-antigravity, #custom-window.win-antigravity { background-image: -gtk-icontheme("antigravity"); }
+#custom-window.icon-readest, #custom-window.win-readest { background-image: -gtk-icontheme("readest"); }
