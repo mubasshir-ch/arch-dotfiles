@@ -476,6 +476,14 @@ if [[ -d "$HYPRIDLE_DIR/profiles" && ! -e "$HYPRIDLE_DIR/active.conf" ]]; then
     echo "balanced" > "$HYPRIDLE_DIR/current"
 fi
 
+# Generate device-specific hyprlock fingerprint override (enabled on laptop, disabled on desktop)
+HYPRLOCK_DEVICE_CONF="$HOME/.config/hypr/hyprlock-device.conf"
+if is_desktop; then
+    printf "auth {\n    fingerprint {\n        enabled = false\n    }\n}\n" > "$HYPRLOCK_DEVICE_CONF"
+else
+    printf "auth {\n    fingerprint {\n        enabled = true\n    }\n}\n" > "$HYPRLOCK_DEVICE_CONF"
+fi
+
 # ------------------------------------------------------------------------------
 # 8. Desktop Associations, Hardware Daemons & System Services
 # ------------------------------------------------------------------------------
