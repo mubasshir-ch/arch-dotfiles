@@ -30,7 +30,7 @@
         "exec": "~/.config/HyprV/waybar/scripts/hypr-keybinds.py",
         "return-type": "json",
         "interval": 10,
-        "on-click": "kitty -e nvim ~/.config/hypr/hyprland.conf"
+        "on-click": "kitty -e nvim ~/.config/hypr/hyprland.lua"
     },
     "custom/notification": {
         "tooltip": false,

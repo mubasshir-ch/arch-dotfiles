@@ -499,12 +499,23 @@ else
     printf "auth {\n    fingerprint {\n        enabled = true\n    }\n}\n" > "$HYPRLOCK_DEVICE_CONF"
 fi
 
-# Generate GPU-specific environment override (only source env_var_nvidia.conf when NVIDIA GPU is present)
-ENV_VAR_DEVICE_CONF="$HOME/.config/hypr/env_var_device.conf"
+# Generate GPU-specific environment override (only require env_var_nvidia.lua when NVIDIA GPU is present)
+ENV_VAR_DEVICE_LUA="$HOME/.config/hypr/env_var_device.lua"
 if command -v lspci &>/dev/null && lspci | grep -qi nvidia; then
-    echo "source = ~/.config/hypr/env_var_nvidia.conf" > "$ENV_VAR_DEVICE_CONF"
+    echo 'require("env_var_nvidia")' > "$ENV_VAR_DEVICE_LUA"
 else
-    echo "# Non-NVIDIA GPU: skipping env_var_nvidia.conf" > "$ENV_VAR_DEVICE_CONF"
+    echo "-- Non-NVIDIA GPU: skipping env_var_nvidia.lua" > "$ENV_VAR_DEVICE_LUA"
+fi
+
+# Compile Waybar Hyprland-Lua IPC shim library
+SHIM_SRC="$HOME/.config/waybar/waybar_hyprlua_shim.c"
+SHIM_SO="$HOME/.config/waybar/libwaybar_hyprlua.so"
+if [[ -f "$SHIM_SRC" ]] && command -v gcc &>/dev/null; then
+    info "Compiling Waybar Hyprland-Lua IPC shim ($SHIM_SO)..."
+    mkdir -p "$HOME/.cache"
+    gcc -O2 -fPIC -shared "$SHIM_SRC" -o "$SHIM_SO" -ldl
+    cp -f "$SHIM_SO" "$HOME/.cache/libwaybar_hyprlua.so" 2>/dev/null || true
+    success "Waybar Hyprland-Lua IPC shim compiled successfully."
 fi
 
 # ------------------------------------------------------------------------------

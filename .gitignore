@@ -6,4 +6,5 @@
 .config/hypr/hypridle/active.conf
 .config/hypr/hypridle/current
 .config/hypr/hyprlock-device.conf
-.config/hypr/env_var_device.conf
+.config/hypr/env_var_device.lua
+.config/waybar/libwaybar_hyprlua.so

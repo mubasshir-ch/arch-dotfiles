@@ -61,8 +61,13 @@ mako &
 #restart the waybar
 #killall -SIGUSR2 waybar <-- start causing web brwsers to close so switched to below...
 pkill waybar
-waybar &
+mkdir -p "$HOME/.cache"
+if [[ ! -f "$HOME/.cache/libwaybar_hyprlua.so" || "$HOME/.config/waybar/waybar_hyprlua_shim.c" -nt "$HOME/.cache/libwaybar_hyprlua.so" ]]; then
+    gcc -shared -fPIC -O2 -o "$HOME/.cache/libwaybar_hyprlua.so" "$HOME/.config/waybar/waybar_hyprlua_shim.c" -ldl 2>/dev/null || cp -f "$HOME/.config/waybar/libwaybar_hyprlua.so" "$HOME/.cache/libwaybar_hyprlua.so" 2>/dev/null || true
+    cp -f "$HOME/.cache/libwaybar_hyprlua.so" "$HOME/.config/waybar/libwaybar_hyprlua.so" 2>/dev/null || true
+fi
+LD_PRELOAD="$HOME/.cache/libwaybar_hyprlua.so" waybar &
 
 if [[ $VER == "v4" ]]; then
-    waybar --config ~/.config/HyprV/waybar/conf/v4-config-bottom.jsonc
+    LD_PRELOAD="$HOME/.cache/libwaybar_hyprlua.so" waybar --config ~/.config/HyprV/waybar/conf/v4-config-bottom.jsonc &
 fi

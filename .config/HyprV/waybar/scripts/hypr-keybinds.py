@@ -5,7 +5,7 @@ import json
 import html
 
 def parse_hyprland_config():
-    conf_path = os.path.expanduser("~/.config/hypr/hyprland.conf")
+    conf_path = os.path.expanduser("~/.config/hypr/hyprland.lua")
     if not os.path.exists(conf_path):
         return None
 
@@ -15,14 +15,13 @@ def parse_hyprland_config():
     except Exception:
         return None
 
-    # Detect $mainMod
+    # Detect local mainMod
     main_mod = "SUPER"
     for line in lines:
         raw = line.strip()
-        if raw.startswith("$mainMod"):
-            parts = raw.split("=", 1)
-            if len(parts) > 1:
-                main_mod = parts[1].strip() or "SUPER"
+        m_mod = re.match(r"^(?:local\s+)?mainMod\s*=\s*[\"']([^\"']+)[\"']", raw)
+        if m_mod:
+            main_mod = m_mod.group(1).strip() or "SUPER"
             break
 
     apps = []
@@ -31,7 +30,7 @@ def parse_hyprland_config():
 
     # Helper to clean and format key combos
     def format_combo(mod_str, key_str):
-        mod_clean = mod_str.replace("$mainMod", main_mod).strip()
+        mod_clean = mod_str.replace("$mainMod", main_mod).replace("mainMod", main_mod).strip()
         parts = [p.capitalize() for p in mod_clean.split() if p]
         key_clean = key_str.strip()
         if key_clean.lower() == "return":
@@ -50,27 +49,76 @@ def parse_hyprland_config():
 
     for line in lines:
         raw = line.strip()
-        if not raw or raw.startswith("#"):
+        if not raw or raw.startswith("--"):
             continue
-        if not (raw.startswith("bind =") or raw.startswith("bindm =")):
+        if not raw.startswith("hl.bind("):
             continue
 
         comment = ""
-        if "#" in raw:
-            code_part, comment = raw.split("#", 1)
+        if " --" in raw:
+            code_part, comment = raw.rsplit(" --", 1)
             comment = comment.strip()
         else:
             code_part = raw
 
-        m = re.match(r"bind[m]?\s*=\s*([^,]+),\s*([^,]+),\s*([^,]+)(?:,\s*(.*))?", code_part)
+        m = re.match(r"^hl\.bind\((.+?),\s*(hl\.dsp\.[a-zA-Z0-9_.]+)\((.*)\)\s*(?:,\s*\{.*\})?\)$", code_part.strip())
         if not m:
             continue
 
-        mod_raw, key_raw, disp_raw, args_raw = m.groups()
-        mod_raw = mod_raw.strip()
-        key_raw = key_raw.strip()
-        disp = disp_raw.strip()
-        args = (args_raw or "").strip()
+        keys_expr, dsp_fn, dsp_args_raw = m.groups()
+        dsp_args_raw = dsp_args_raw.strip()
+
+        # Parse keys_expr like: mainMod .. " + SHIFT + R" or "SUPER + Q"
+        tokens = [
+            t.strip().strip('"').strip("'")
+            for t in re.split(r"\.\.|\+", keys_expr)
+            if t.strip().strip('"').strip("'")
+        ]
+        if not tokens:
+            continue
+
+        key_raw = tokens[-1]
+        mod_raw = " ".join(tokens[:-1])
+
+        # Map Lua dispatcher back to legacy dispatcher names & args
+        disp = ""
+        args = ""
+        if dsp_fn == "hl.dsp.exec_cmd":
+            disp = "exec"
+            args = dsp_args_raw
+            if (args.startswith("[[") and args.endswith("]]")):
+                args = args[2:-2]
+            elif (args.startswith('"') and args.endswith('"')) or (args.startswith("'") and args.endswith("'")):
+                args = args[1:-1]
+        elif dsp_fn == "hl.dsp.window.close" or dsp_fn == "hl.dsp.window.kill":
+            disp = "killactive"
+        elif dsp_fn == "hl.dsp.window.fullscreen":
+            disp = "fullscreen"
+        elif dsp_fn == "hl.dsp.exit":
+            disp = "exit"
+        elif dsp_fn == "hl.dsp.window.float":
+            disp = "togglefloating"
+        elif dsp_fn == "hl.dsp.window.pseudo":
+            disp = "pseudo"
+        elif dsp_fn == "hl.dsp.layout":
+            disp = "layoutmsg"
+            args = dsp_args_raw.strip('"').strip("'")
+        elif dsp_fn == "hl.dsp.focus":
+            if "workspace" in dsp_args_raw:
+                disp = "workspace"
+            else:
+                disp = "movefocus"
+        elif dsp_fn == "hl.dsp.window.move":
+            if "workspace" in dsp_args_raw:
+                disp = "movetoworkspace"
+            else:
+                disp = "movewindow"
+        elif dsp_fn == "hl.dsp.window.resize":
+            disp = "resizeactive"
+        elif dsp_fn == "hl.dsp.window.drag":
+            disp = "movewindow"
+        else:
+            continue
 
         combo = format_combo(mod_raw, key_raw)
         if combo in seen_combos:
@@ -167,7 +215,7 @@ def parse_hyprland_config():
     tooltip_lines.extend([
         "",
         "──────────────────────────────────────────",
-        "󰈈 <i>Click to edit hyprland.conf in Neovim</i></span>"
+        "󰈈 <i>Click to edit hyprland.lua in Neovim</i></span>"
     ])
 
     return "\n".join(tooltip_lines)

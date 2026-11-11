@@ -32,12 +32,17 @@ get_ver() {
 restart_waybar() {
     #restart the waybar
     pkill waybar
-    waybar & 
+    mkdir -p "$HOME/.cache"
+    if [[ ! -f "$HOME/.cache/libwaybar_hyprlua.so" || "$HOME/.config/waybar/waybar_hyprlua_shim.c" -nt "$HOME/.cache/libwaybar_hyprlua.so" ]]; then
+        gcc -shared -fPIC -O2 -o "$HOME/.cache/libwaybar_hyprlua.so" "$HOME/.config/waybar/waybar_hyprlua_shim.c" -ldl 2>/dev/null || cp -f "$HOME/.config/waybar/libwaybar_hyprlua.so" "$HOME/.cache/libwaybar_hyprlua.so" 2>/dev/null || true
+        cp -f "$HOME/.cache/libwaybar_hyprlua.so" "$HOME/.config/waybar/libwaybar_hyprlua.so" 2>/dev/null || true
+    fi
+    LD_PRELOAD="$HOME/.cache/libwaybar_hyprlua.so" waybar & 
 
     get_ver   
 
     if [[ $VER == "v4" ]]; then
-        waybar --config ~/.config/HyprV/waybar/conf/v4-config-bottom.jsonc
+        LD_PRELOAD="$HOME/.cache/libwaybar_hyprlua.so" waybar --config ~/.config/HyprV/waybar/conf/v4-config-bottom.jsonc &
     fi
 
 }
@@ -46,15 +51,15 @@ set_current_background() {
     get_theme
     get_ver
     
-    if [[ ! -z "$SET_BG" ]]; then
+    if [[ -z "$SET_BG" ]]; then
         #set the current background
         if [[ $THEMEIS == "dark.css" ]]; then
-            swww img ~/.config/HyprV/backgrounds/$VER'-background-dark.jpg'
+            swww img ~/.config/HyprV/backgrounds/$VER'-background-dark.jpg' &
         else
-            swww img ~/.config/HyprV/backgrounds/$VER'-background.jpg'
+            swww img ~/.config/HyprV/backgrounds/$VER'-background.jpg' &
         fi
     else
-        swww img $SET_BG
+        swww img "$SET_BG" &
     fi
 }
 
@@ -115,9 +120,9 @@ if [[ "$1" == "vswitch" ]]; then
     update_theme
     restart_waybar
 elif [[ "$1" == "setbg" ]]; then
-    set_current_background
     update_theme
     restart_waybar
+    set_current_background
 elif [[ "$1" == "swkb" ]]; then
     switch_keyboard
     restart_waybar
