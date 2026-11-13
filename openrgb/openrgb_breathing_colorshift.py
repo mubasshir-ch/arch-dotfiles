@@ -24,6 +24,9 @@ KEYBOARD_BREATH_SPEED = 3  # EVision speed step (0=fastest .. 5=slowest)
 NET_PACKET_ID_REQUEST_CONTROLLER_COUNT = 0
 NET_PACKET_ID_REQUEST_CONTROLLER_DATA = 1
 NET_PACKET_ID_REQUEST_PROTOCOL_VERSION = 40
+NET_PACKET_ID_DEVICE_LIST_UPDATED = 100
+NET_PACKET_ID_REQUEST_RESCAN_DEVICES = 140
+EXPECTED_DEVICE_COUNT = 5  # 2x RAM, mouse, keyboard, motherboard
 NET_PACKET_ID_SET_CLIENT_NAME = 50
 NET_PACKET_ID_RGBCONTROLLER_UPDATELEDS = 1050
 NET_PACKET_ID_RGBCONTROLLER_UPDATEMODE = 1101
@@ -64,15 +67,25 @@ class OpenRGBClient:
             if pkt_id == exp_pkt:
                 return dev_idx, pkt_id, data
 
+    def request_rescan(self):
+        # Ask the server to re-run hardware detection (same as "Rescan Devices" in the GUI)
+        self.send_pkt(0, NET_PACKET_ID_REQUEST_RESCAN_DEVICES)
+
     def start_background_drainer(self):
+        # Consume server packets; flag when the device list changes (rescan, hotplug, GUI resync)
+        self.list_changed = False
+        self.closed = False
+
         def _drain():
             self.sock.settimeout(None)
             try:
                 while True:
-                    if not self.sock.recv(4096):
-                        break
+                    _, pkt_id, _ = self.recv_pkt()
+                    if pkt_id == NET_PACKET_ID_DEVICE_LIST_UPDATED:
+                        self.list_changed = True
             except Exception:
                 pass
+            self.closed = True
 
         t = threading.Thread(target=_drain, daemon=True)
         t.start()
@@ -193,15 +206,23 @@ def compute_rgb(t):
 
 
 def run_effect_loop():
-    last_count = 0
+    # At boot, OpenRGB often starts before device permissions (uaccess) are granted and detects
+    # nothing. If devices are missing, ask the server to rescan (like clicking "Rescan" in the GUI).
+    attempt = 0
     while True:
         client = OpenRGBClient()
         devices = client.get_devices()
-        if len(devices) >= 5 or (len(devices) > 0 and len(devices) == last_count):
+        if len(devices) >= EXPECTED_DEVICE_COUNT:
             break
-        last_count = len(devices)
+        attempt += 1
+        # After ~10 rescans (~2 min), accept whatever was found (e.g. a device was unplugged)
+        if devices and attempt > 10:
+            break
+        print(f"Found {len(devices)}/{EXPECTED_DEVICE_COUNT} devices, requesting rescan (attempt {attempt})...")
+        client.request_rescan()
+        time.sleep(1.0)
         client.sock.close()
-        time.sleep(3.0)
+        time.sleep(10.0)  # detection takes ~5s (I2C DRAM probing is slow)
 
     client.start_background_drainer()
     print(f"Connected to OpenRGB Server (proto v{client.proto}). Found {len(devices)} devices:")
@@ -239,6 +260,11 @@ def run_effect_loop():
     last_breath_cycle = -1
 
     while True:
+        # Device list changed (rescan/hotplug/GUI resync) or server went away -> reconnect fresh
+        if client.list_changed or client.closed:
+            client.sock.close()
+            raise ConnectionError("device list changed or server disconnected")
+
         now = time.monotonic()
         t = now - start_t
         r, g, b, hue, brightness = compute_rgb(t)
