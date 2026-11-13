@@ -1,0 +1,21 @@
+[Unit]
+Description=RustingStrata server running Qwen3.6-35B-A3B UD-IQ3_S (32K Context)
+After=network.target
+Conflicts=llama-qwen35.service llama-qwen35-0.8b.service llama-qwen36.service
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/strata serve \
+  --model %h/.local/share/models/qwen3.6-35b-a3b/Qwen3.6-35B-A3B-UD-IQ3_S.gguf \
+  --addr 127.0.0.1:8080 \
+  --gpu \
+  --ctx 32768 \
+  --kv q8 \
+  --temp 0.6 \
+  --top-p 0.95 \
+  --top-k 20
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
