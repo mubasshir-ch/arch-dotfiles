@@ -1,12 +1,4 @@
 #!/bin/bash
-
-tmux start-server
-
-if ! tmux has-session 2>/dev/null; then
-    tmux new-session -d -s main
-fi
-
-tmux run-shell ~/.tmux/plugins/tmux-resurrect/scripts/restore.sh
-
-# Optional: attach to session
-# tmux attach-session -t main
+# Tmux sessions are now lazy-loaded on demand via ~/.config/hypr/tmux-session-switcher.sh (Super + S).
+# Do not eagerly restore all sessions into memory on startup.
+exit 0
