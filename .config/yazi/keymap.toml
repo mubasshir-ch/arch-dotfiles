@@ -10,8 +10,8 @@ prepend_keymap = [
 	{ on = [ "E" ], run = 'shell "${EDITOR:-nvim} \"$@\"" --block', desc = "Open in Neovim" },
 
 	# Copy paths
-	{ on = [ "y", "p" ], run = 'shell "printf \'%s\' \"$1\" | wl-copy" --confirm', desc = "Copy filename to clipboard" },
-	{ on = [ "y", "P" ], run = 'shell "printf \'%s\' \"$PWD/$1\" | wl-copy" --confirm', desc = "Copy full path to clipboard" },
+	{ on = [ "y", "p" ], run = "shell 'printf \"%s\" \"$1\" | wl-copy' --confirm", desc = "Copy filename to clipboard" },
+	{ on = [ "y", "P" ], run = "shell 'printf \"%s\" \"$PWD/$1\" | wl-copy' --confirm", desc = "Copy full path to clipboard" },
 
 	# Preview scrolling
 	{ on = [ "<C-e>" ], run = "seek 5", desc = "Scroll preview down" },
